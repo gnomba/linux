@@ -102,9 +102,9 @@ echo "[+] Пересобираем squashfs..."
 cd ..
 sudo mksquashfs squashfs-root ../LiveOS/squashfs.img -comp xz -b 1M -Xbcj x86 -noappend
 
-rm -rfv squashfs-root
-
 cd ..
+
+rm -rfv squashfs
 
 echo "[+] Собираем новый ISO..."
 xorriso -as mkisofs -o "../$CUSTOM_ISO" \
