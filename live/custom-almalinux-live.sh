@@ -28,16 +28,16 @@ PUBKEY_FILE="$HOME/.ssh/id_rsa.pub"  # ваш публичный ключ
 # === Подготовка ===
 mkdir -p "$WORKDIR" "$MOUNTDIR"
 
-echo "[+] Скачиваем ISO..."
+echo "[+] Скачиваем ISO... ("$ISO_URL" --> "$ISO_NAME")"
 [ -f "$ISO_NAME" ] || curl -L "$ISO_URL" -o "$ISO_NAME"
 
-echo "[+] Монтируем ISO..."
+echo "[+] Монтируем ISO... ("$ISO_NAME" --> "$MOUNTDIR")"
 sudo mount -o loop "$ISO_NAME" "$MOUNTDIR"
 
-echo "[+] Копируем содержимое ISO..."
+echo "[+] Копируем содержимое ISO... ("$MOUNTDIR/" --> "$WORKDIR/")"
 rsync -a "$MOUNTDIR/" "$WORKDIR/"
 
-sudo umount "$MOUNTDIR"
+sudo umount -v "$MOUNTDIR"
 
 cd "$WORKDIR"
 
@@ -47,14 +47,19 @@ cd squashfs
 unsquashfs ../LiveOS/squashfs.img
 cd squashfs-root
 
+losetup --find --partscan --show LiveOS/rootfs.img 
+
+mkdir -pv /mnt/rootfs
+mount /dev/loop0 /mnt/rootfs
+
 echo "[+] Настраиваем sshd..."
 # Включаем root, пароль и ключи
-sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' etc/ssh/sshd_config
-sudo sed -i 's/^#\?PubkeyAuthentication.*/PubkeyAuthentication yes/' etc/ssh/sshd_config
-sudo sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' etc/ssh/sshd_config
+sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /mnt/rootfs/etc/ssh/sshd_config
+sudo sed -i 's/^#\?PubkeyAuthentication.*/PubkeyAuthentication yes/' /mnt/rootfs/etc/ssh/sshd_config
+sudo sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' /mnt/rootfs/etc/ssh/sshd_config
 
 echo "[+] Добавляем systemd unit для SSH..."
-cat <<EOF | sudo tee etc/systemd/system/live-ssh.service
+cat <<EOF | sudo tee /mnt/rootfs/etc/systemd/system/live-ssh.service
 [Unit]
 Description=Enable SSH in Live session
 After=network.target
@@ -70,24 +75,29 @@ ExecStart=/bin/systemctl start sshd
 WantedBy=multi-user.target
 EOF
 
-sudo ln -s /etc/systemd/system/live-ssh.service etc/systemd/system/multi-user.target.wants/live-ssh.service
+sudo ln -s /etc/systemd/system/live-ssh.service /mnt/rootfs/etc/systemd/system/multi-user.target.wants/live-ssh.service
 
 # === Добавляем ключи ===
 if [ -f "$PUBKEY_FILE" ]; then
     echo "[+] Копируем публичный ключ для liveuser..."
-    sudo mkdir -p home/liveuser/.ssh
-    sudo cp "$PUBKEY_FILE" home/liveuser/.ssh/authorized_keys
-    sudo chmod 700 home/liveuser/.ssh
-    sudo chmod 600 home/liveuser/.ssh/authorized_keys
-    sudo chown -R 1000:1000 home/liveuser/.ssh  # UID/GID liveuser
+    sudo mkdir -p /mnt/rootfs/home/liveuser/.ssh
+    sudo cp "$PUBKEY_FILE" /mnt/rootfs/home/liveuser/.ssh/authorized_keys
+    sudo chmod 700 /mnt/rootfs/home/liveuser/.ssh
+    sudo chmod 600 /mnt/rootfs/home/liveuser/.ssh/authorized_keys
+    sudo chown -R 1000:1000 /mnt/rootfs/home/liveuser/.ssh  # UID/GID liveuser
 
     echo "[+] Копируем публичный ключ для root..."
-    sudo mkdir -p root/.ssh
-    sudo cp "$PUBKEY_FILE" root/.ssh/authorized_keys
-    sudo chmod 700 root/.ssh
-    sudo chmod 600 root/.ssh/authorized_keys
-    sudo chown -R 0:0 root/.ssh
+    sudo mkdir -p /mnt/rootfs/root/.ssh
+    sudo cp "$PUBKEY_FILE" /mnt/rootfs/root/.ssh/authorized_keys
+    sudo chmod 700 /mnt/rootfs/root/.ssh
+    sudo chmod 600 /mnt/rootfs/root/.ssh/authorized_keys
+    sudo chown -R 0:0 /mnt/rootfs/root/.ssh
 fi
+
+pause
+sync
+umount -fv /mnt/rootfs
+losetup -d /dev/loop0
 
 echo "[+] Пересобираем squashfs..."
 cd ..
