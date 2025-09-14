@@ -94,7 +94,6 @@ if [ -f "$PUBKEY_FILE" ]; then
     sudo chown -R 0:0 /mnt/rootfs/root/.ssh
 fi
 
-pause
 sync
 umount -fv /mnt/rootfs
 losetup -d /dev/loop0
