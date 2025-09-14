@@ -108,8 +108,8 @@ rm -rfv squashfs
 
 echo "[+] Собираем новый ISO..."
 xorriso -as mkisofs -o "../$CUSTOM_ISO" \
-  -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
-  -c isolinux/boot.cat -b /usr/lib/ISOLINUX/isolinux.bin \
+  -isohybrid-mbr isolinux/isolinux.bin \
+  -b isolinux/isolinux.bin \
   -no-emul-boot -boot-load-size 4 -boot-info-table \
   -eltorito-alt-boot -e images/efiboot.img -no-emul-boot \
   .
