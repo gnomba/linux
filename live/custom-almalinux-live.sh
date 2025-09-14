@@ -3,15 +3,15 @@ set -e
 
 # === Выбор версии AlmaLinux ===
 echo "Выберите версию AlmaLinux Live ISO:"
-echo "1) 8"
-echo "2) 9"
-echo "3) 10"
+echo "8) 8"
+echo "9) 9"
+echo "10) 10"
 read -p "Введите номер версии [1-4]: " VERSION
 
 case $VERSION in
-  1) ISO_URL="https://repo.almalinux.org/almalinux/$VERSION/live/x86_64/AlmaLinux-$VERSION-latest-x86_64-Live-GNOME-Mini.iso" ;;
-  2) ISO_URL="https://repo.almalinux.org/almalinux/$VERSION/live/x86_64/AlmaLinux-$VERSION-latest-x86_64-Live-GNOME-Mini.iso" ;;
-  3) ISO_URL="https://repo.almalinux.org/almalinux/$VERSION/live/x86_64/AlmaLinux-$VERSION-latest-x86_64-Live-GNOME.iso" ;;
+  8) ISO_URL="https://repo.almalinux.org/almalinux/$VERSION/live/x86_64/AlmaLinux-$VERSION-latest-x86_64-Live-GNOME-Mini.iso" ;;
+  9) ISO_URL="https://repo.almalinux.org/almalinux/$VERSION/live/x86_64/AlmaLinux-$VERSION-latest-x86_64-Live-GNOME-Mini.iso" ;;
+  10) ISO_URL="https://repo.almalinux.org/almalinux/$VERSION/live/x86_64/AlmaLinux-$VERSION-latest-x86_64-Live-GNOME.iso" ;;
   *) echo "Неверный выбор"; exit 1 ;;
 esac
 
