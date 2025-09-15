@@ -92,7 +92,14 @@ if [ -f "$PUBKEY_FILE" ]; then
     sudo chmod 700 /mnt/rootfs/root/.ssh
     sudo chmod 600 /mnt/rootfs/root/.ssh/authorized_keys
     sudo chown -R 0:0 /mnt/rootfs/root/.ssh
+else
+    echo "[-] Публичный ключ для liveuser/root отсутствует..."
 fi
+
+echo "[+] Добавляем HDSentinel..."
+wget https://www.hdsentinel.com/hdslin/hdsentinel-020c-x64.zip -O /tmp/hdsentinel-020c-x64.zip
+unzip /tmp/hdsentinel-020c-x64.zip -d /mnt/rootfs/usr/local/bin
+chmod +x /mnt/rootfs/usr/local/bin/HDSentinel
 
 sync
 umount -fv /mnt/rootfs
@@ -113,6 +120,9 @@ xorriso -as mkisofs -o "../$CUSTOM_ISO" \
   -no-emul-boot -boot-load-size 4 -boot-info-table \
   -eltorito-alt-boot -e images/efiboot.img -no-emul-boot \
   .
+
+cd ..
+rm -rfv $WORKDIR $MOUNTDIR
 
 echo "[+] Готово! Новый ISO: $CUSTOM_ISO"
 echo "    Доступные пользователи:"
