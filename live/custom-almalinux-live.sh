@@ -6,7 +6,7 @@ echo "Выберите версию AlmaLinux Live ISO:"
 echo "8) 8"
 echo "9) 9"
 echo "10) 10"
-read -p "Введите номер версии [1-4]: " VERSION
+read -p "Введите номер версии [8-10]: " VERSION
 
 case $VERSION in
   8) ISO_URL="https://repo.almalinux.org/almalinux/$VERSION/live/x86_64/AlmaLinux-$VERSION-latest-x86_64-Live-GNOME-Mini.iso" ;;
