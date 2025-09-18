@@ -121,11 +121,14 @@ else
 fi
 
 echo "[+] Настраиваем Tmux..."
-mkdir -pv ${vROOFSDIR}/home/liveuser/.tmux.conf ${vROOFSDIR}/root/.tmux.conf
-cat <<EOB | sudo tee ${vROOFSDIR}/home/liveuser/.tmux.conf ${vROOFSDIR}/root/.tmux.conf
+cat <<EOB | sudo tee ${vROOFSDIR}/home/liveuser/.tmux.conf
 setw -g mouse on
 set-option -g history-limit 3000000
 EOB
+cat <<EOC | sudo tee ${vROOFSDIR}/root/.tmux.conf
+setw -g mouse on
+set-option -g history-limit 3000000
+EOC
 
 echo "[+] Добавляем HDSentinel..."
 wget https://www.hdsentinel.com/hdslin/hdsentinel-020c-x64.zip -O /tmp/hdsentinel-020c-x64.zip
