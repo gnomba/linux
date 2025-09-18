@@ -2,22 +2,24 @@
 set -e
 
 # === Выбор версии AlmaLinux ===
-echo "Выберите версию AlmaLinux Live ISO:"
-echo "8) 8"
-echo "9) 9"
-echo "10) 10"
-read -p "Введите номер версии [8-10]: " VERSION
+echo "Выберите версию Live ISO:"
+echo "1) AlmaLinux 8 x86_64"
+echo "2) AlmaLinux 9 x86_64"
+echo "3) AlmaLinux 10 x86_64"
+echo "4) AlmaLinux 10 x86_64_v2"
+read -p "Введите номер версии [1-4]: " vCHOICE
 
-case $VERSION in
-  8) ISO_URL="https://repo.almalinux.org/almalinux/$VERSION/live/x86_64/AlmaLinux-$VERSION-latest-x86_64-Live-GNOME-Mini.iso" ;;
-  9) ISO_URL="https://repo.almalinux.org/almalinux/$VERSION/live/x86_64/AlmaLinux-$VERSION-latest-x86_64-Live-GNOME-Mini.iso" ;;
-  10) ISO_URL="https://repo.almalinux.org/almalinux/$VERSION/live/x86_64/AlmaLinux-$VERSION-latest-x86_64-Live-GNOME.iso" ;;
+case ${vCHOICE} in
+  1) vVERSION=8; vARCH=x86_64; ISO_URL="https://repo.almalinux.org/almalinux/${vVERSION}/live/${vARCH}/AlmaLinux-${vVERSION}-latest-${vARCH}-Live-GNOME-Mini.iso" ;;
+  2) vVERSION=9; vARCH=x86_64; ISO_URL="https://repo.almalinux.org/almalinux/${vVERSION}/live/${vARCH}/AlmaLinux-${vVERSION}-latest-${vARCH}-Live-GNOME-Mini.iso" ;;
+  3) vVERSION=10; vARCH=x86_64; ISO_URL="https://repo.almalinux.org/almalinux/${vVERSION}/live/${vARCH}/AlmaLinux-${vVERSION}-latest-${vARCH}-Live-GNOME.iso" ;;
+  4) vVERSION=10; vARCH=x86_64_v2; ISO_URL="https://repo.almalinux.org/almalinux/${vVERSION}/live/${vARCH}/AlmaLinux-${vVERSION}-latest-${vARCH}-Live-GNOME.iso" ;;
   *) echo "Неверный выбор"; exit 1 ;;
 esac
 
 # === Параметры ===
-ISO_NAME="AlmaLinux-$VERSION-live-original.iso"
-CUSTOM_ISO="AlmaLinux-$VERSION-live-ssh.iso"
+ISO_NAME="AlmaLinux-${vVERSION}-live-original.iso"
+CUSTOM_ISO="AlmaLinux-${vVERSION}-live-ssh.iso"
 WORKDIR="$PWD/almalinux-live"
 MOUNTDIR="$PWD/iso-mount"
 
@@ -34,37 +36,49 @@ echo "[+] Скачиваем ISO... ("$ISO_URL" --> "$ISO_NAME")"
 echo "[+] Монтируем ISO... ("$ISO_NAME" --> "$MOUNTDIR")"
 sudo mount -o loop "$ISO_NAME" "$MOUNTDIR"
 
-echo "[+] Копируем содержимое ISO... ("$MOUNTDIR/" --> "$WORKDIR/")"
+echo "[+] Копируем содержимое ISO..."
+echo "    [+]$MOUNTDIR/ --> $WORKDIR/)"
 sudo rsync -a "$MOUNTDIR/" "$WORKDIR/"
 
+echo "[+] Размонтируем ISO..."
 sudo umount -v "$MOUNTDIR"
 
-cd "$WORKDIR"
+echo "[+] Переходим в $WORKDIR..."
+cd "$WORKDIR"; pwd
 
 echo "[+] Распаковываем squashfs..."
-sudo mkdir squashfs
-cd squashfs
+echo "    [+] Создаём папку squashfs..."
+sudo mkdir -v squashfs
+echo "    [+] Переходим в squashfs..."
+cd squashfs; pwd
 sudo unsquashfs ../LiveOS/squashfs.img
-cd squashfs-root
+echo "    [+] Переходим в squashfs-root..."
+cd squashfs-root; pwd
 
-if [[ "$VERSION" == "8" || "$VERSION" == "9" ]]; then
-    sudo losetup --find --partscan --show LiveOS/rootfs.img 
+echo "[+] Версия AlmaLinux: ${vVERSION}..."
+if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
+    echo "    [+] Связываем файл LiveOS/rootfs.img с loop-устройством..."
+    sudo losetup --find --partscan --show LiveOS/rootfs.img
     vLOOPDEV="$(sudo losetup -l | grep rootfs | awk '{print $1}')"
+    echo "    [+] Loop-устройство: ${vLOOPDEV}..."
     vROOFSDIR="/mnt/rootfs"
+    echo "    [+] Создаём vROOFSDIR: ${vROOFSDIR}..."
     sudo mkdir -pv ${vROOFSDIR}
+    echo "    [+] Монтируем loop-устройство ${vLOOPDEV} в ${vROOFSDIR}..."
     sudo mount -v ${vLOOPDEV} ${vROOFSDIR}
 else
     vROOFSDIR="."
+    echo "    [+] vROOFSDIR: ${vROOFSDIR}..."
 fi
 
 echo "[+] Настраиваем sshd..."
-# Включаем root, пароль и ключи
+echo "    [+] Включаем root, пароль и ключи..."
 sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' ${vROOFSDIR}/etc/ssh/sshd_config
 sudo sed -i 's/^#\?PubkeyAuthentication.*/PubkeyAuthentication yes/' ${vROOFSDIR}/etc/ssh/sshd_config
 sudo sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' ${vROOFSDIR}/etc/ssh/sshd_config
 
 echo "[+] Добавляем systemd unit для SSH..."
-cat <<EOF | sudo tee ${vROOFSDIR}/etc/systemd/system/live-ssh.service
+cat <<EOA | sudo tee ${vROOFSDIR}/etc/systemd/system/live-ssh.service
 [Unit]
 Description=Enable SSH in Live session
 After=network.target
@@ -78,64 +92,69 @@ ExecStart=/bin/systemctl start sshd
 
 [Install]
 WantedBy=multi-user.target
-EOF
+EOA
 
 sudo ln -s /etc/systemd/system/live-ssh.service ${vROOFSDIR}/etc/systemd/system/multi-user.target.wants/live-ssh.service
 
-# === Добавляем ключи ===
+echo "[+] Добавляем ключи..."
 if [ -f "$PUBKEY_FILE" ]; then
-    echo "[+] Копируем публичный ключ для liveuser..."
+    echo "    [+] Копируем публичный ключ для liveuser..."
     sudo mkdir -pv ${vROOFSDIR}/home/liveuser/.ssh
     sudo cp "$PUBKEY_FILE" ${vROOFSDIR}/home/liveuser/.ssh/authorized_keys
     sudo chmod 700 ${vROOFSDIR}/home/liveuser/.ssh
     sudo chmod 600 ${vROOFSDIR}/home/liveuser/.ssh/authorized_keys
     sudo chown -R 1000:1000 ${vROOFSDIR}/home/liveuser/.ssh  # UID/GID liveuser
 
-    echo "[+] Копируем публичный ключ для root..."
+    echo "    [+] Копируем публичный ключ для root..."
     sudo mkdir -pv ${vROOFSDIR}/root/.ssh
     sudo cp "$PUBKEY_FILE" ${vROOFSDIR}/root/.ssh/authorized_keys
     sudo chmod 700 ${vROOFSDIR}/root/.ssh
     sudo chmod 600 ${vROOFSDIR}/root/.ssh/authorized_keys
     sudo chown -R 0:0 ${vROOFSDIR}/root/.ssh
 else
-    echo "[-] Публичный ключ для liveuser/root отсутствует..."
+    echo "    [-] Публичный ключ для liveuser/root отсутствует..."
 fi
 
 echo "[+] Настраиваем TMUX..."
-cat <<EOA | sudo tee ${vROOFSDIR}/home/liveuser/.tmux.conf ${vROOFSDIR}/root/.tmux.conf
+cat <<EOB | sudo tee ${vROOFSDIR}/home/liveuser/.tmux.conf ${vROOFSDIR}/root/.tmux.conf
 setw -g mouse on
 set-option -g history-limit 3000000
-EOA
+EOB
 
 echo "[+] Добавляем HDSentinel..."
 wget https://www.hdsentinel.com/hdslin/hdsentinel-020c-x64.zip -O /tmp/hdsentinel-020c-x64.zip
 sudo unzip /tmp/hdsentinel-020c-x64.zip -d ${vROOFSDIR}/usr/local/bin
 sudo chmod +x ${vROOFSDIR}/usr/local/bin/HDSentinel
+rm -fv /tmp/hdsentinel-020c-x64.zip
 
 sync
 sudo sync
 
-if [[ "$VERSION" == "8" || "$VERSION" == "9" ]]; then
+if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
+    echo "[+] Размонтируем '${vROOFSDIR}'..."
     sudo umount -fv ${vROOFSDIR}
+    echo "[+] Отсоединяем loop-устройство ${vLOOPDEV}..."
     sudo losetup -d ${vLOOPDEV}
 fi
 
 echo "[+] Пересобираем squashfs..."
-cd ..
+cd ..; pwd
 sudo mksquashfs squashfs-root ../LiveOS/squashfs.img -comp xz -b 1M -Xbcj x86 -noappend
 
-cd ..
+cd ..; pwd
 
+echo "[+] Удаляем папку squashfs..."
 sudo rm -rfv squashfs
 
 echo "[+] Собираем новый ISO..."
-if [[ "$VERSION" == "8" || "$VERSION" == "9" ]]; then
+if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
   sudo xorriso -as mkisofs -o "../$CUSTOM_ISO" \
   -isohybrid-mbr isolinux/isolinux.bin \
   -b isolinux/isolinux.bin \
   -no-emul-boot -boot-load-size 4 -boot-info-table \
   -eltorito-alt-boot -e images/efiboot.img -no-emul-boot \
   .
+  echo "    [+] Удаляем папку '${vROOFSDIR}'..."
   sudo rm -rfv ${vROOFSDIR}
 else
   sudo xorriso -as mkisofs -o "../$CUSTOM_ISO" \
@@ -144,10 +163,14 @@ else
   .
 fi
 
-cd ..
-sudo rm -rfv $WORKDIR $MOUNTDIR
+cd ..; pwd
+
+echo "[+] Удаляем папки '$WORKDIR' '$MOUNTDIR'..."
+sudo rm -rf $WORKDIR $MOUNTDIR
 
 echo "[+] Готово! Новый ISO: $CUSTOM_ISO"
 echo "    Доступные пользователи:"
 echo "      liveuser / $PASSWORD"
 echo "      root     / $ROOTPASS"
+
+exit 0
