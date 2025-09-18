@@ -125,14 +125,10 @@ if [ ! -d "${vROOFSDIR}/home/liveuser" ]; then
   sudo mkdir -pv ${vROOFSDIR}/home/liveuser/
   sudo chown -R 1000:1000 ${vROOFSDIR}/home/liveuser  # UID/GID liveuser
 fi
-cat <<EOB | sudo tee ${vROOFSDIR}/home/liveuser/.tmux.conf
+cat <<EOB | sudo tee ${vROOFSDIR}/home/liveuser/.tmux.conf ${vROOFSDIR}/root/.tmux.conf
 setw -g mouse on
 set-option -g history-limit 3000000
 EOB
-cat <<EOC | sudo tee ${vROOFSDIR}/root/.tmux.conf
-setw -g mouse on
-set-option -g history-limit 3000000
-EOC
 
 echo "[+] Добавляем HDSentinel..."
 wget https://www.hdsentinel.com/hdslin/hdsentinel-020c-x64.zip -O /tmp/hdsentinel-020c-x64.zip
