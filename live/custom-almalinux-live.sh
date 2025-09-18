@@ -121,6 +121,10 @@ else
 fi
 
 echo "[+] Настраиваем Tmux..."
+if [ ! -d "${vROOFSDIR}/home/liveuser" ]; then
+  sudo mkdir -pv ${vROOFSDIR}/home/liveuser/
+  sudo chown -R 1000:1000 ${vROOFSDIR}/home/liveuser  # UID/GID liveuser
+fi
 cat <<EOB | sudo tee ${vROOFSDIR}/home/liveuser/.tmux.conf
 setw -g mouse on
 set-option -g history-limit 3000000
