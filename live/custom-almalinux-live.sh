@@ -29,6 +29,7 @@ ROOTPASS="rootpass"    # пароль для root
 PUBKEY_FILE="$HOME/.ssh/id_rsa.pub"  # ваш публичный ключ
 
 # === Подготовка ===
+echo "[+] Создаём папки '$WORKDIR' '$MOUNTDIR'..."
 mkdir -pv "$WORKDIR" "$MOUNTDIR"
 
 echo "[+] Скачиваем ISO..."
