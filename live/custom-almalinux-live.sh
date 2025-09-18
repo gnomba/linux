@@ -139,14 +139,13 @@ if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
     sudo losetup -d ${vLOOPDEV}
 fi
 
-echo "[+] Пересобираем squashfs..."
 cd ..; pwd
+echo "[+] Пересобираем squashfs..."
 sudo mksquashfs squashfs-root ../LiveOS/squashfs.img -comp xz -b 1M -Xbcj x86 -noappend
 
 cd ..; pwd
-
 echo "[+] Удаляем папку squashfs..."
-sudo rm -rfv squashfs
+sudo rm -rf squashfs
 
 echo "[+] Собираем новый ISO..."
 if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
@@ -157,7 +156,7 @@ if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
   -eltorito-alt-boot -e images/efiboot.img -no-emul-boot \
   .
   echo "    [+] Удаляем папку '${vROOFSDIR}'..."
-  sudo rm -rfv ${vROOFSDIR}
+  sudo rm -rf ${vROOFSDIR}
 else
   sudo xorriso -as mkisofs -o "../$CUSTOM_ISO" \
   -no-emul-boot -boot-load-size 4 -boot-info-table \
