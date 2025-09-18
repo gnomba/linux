@@ -18,8 +18,8 @@ case ${vCHOICE} in
 esac
 
 # === Параметры ===
-ISO_NAME="AlmaLinux-${vVERSION}-live-original.iso"
-CUSTOM_ISO="AlmaLinux-${vVERSION}-live-ssh.iso"
+ISO_NAME="AlmaLinux-${vVERSION}-${vARCH}-live-original.iso"
+CUSTOM_ISO="AlmaLinux-${vVERSION}-${vARCH}-live-ssh.iso"
 WORKDIR="$PWD/almalinux-live"
 MOUNTDIR="$PWD/iso-mount"
 
@@ -30,14 +30,16 @@ PUBKEY_FILE="$HOME/.ssh/id_rsa.pub"  # ваш публичный ключ
 # === Подготовка ===
 mkdir -pv "$WORKDIR" "$MOUNTDIR"
 
-echo "[+] Скачиваем ISO... ("$ISO_URL" --> "$ISO_NAME")"
+echo "[+] Скачиваем ISO..."
+echo "    [+] $ISO_URL --> $ISO_NAME"
 [ -f "$ISO_NAME" ] || curl -L "$ISO_URL" -o "$ISO_NAME"
 
-echo "[+] Монтируем ISO... ("$ISO_NAME" --> "$MOUNTDIR")"
+echo "[+] Монтируем ISO..."
+echo "    [+] $ISO_NAME --> $MOUNTDIR"
 sudo mount -o loop "$ISO_NAME" "$MOUNTDIR"
 
 echo "[+] Копируем содержимое ISO..."
-echo "    [+]$MOUNTDIR/ --> $WORKDIR/)"
+echo "    [+] $MOUNTDIR/ --> $WORKDIR/)"
 sudo rsync -a "$MOUNTDIR/" "$WORKDIR/"
 
 echo "[+] Размонтируем ISO..."
