@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e
 
 # === Выбор версии AlmaLinux ===
