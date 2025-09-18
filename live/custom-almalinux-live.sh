@@ -101,6 +101,10 @@ else
     echo "[-] Публичный ключ для liveuser/root отсутствует..."
 fi
 
+echo "[+] Настраиваем TMUX..."
+echo -e "setw -g mouse on\nset-option -g history-limit 3000000" > ${vROOFSDIR}/home/liveuser/.tmux.conf
+echo -e "setw -g mouse on\nset-option -g history-limit 3000000" > ${vROOFSDIR}/root/.tmux.conf
+
 echo "[+] Добавляем HDSentinel..."
 wget https://www.hdsentinel.com/hdslin/hdsentinel-020c-x64.zip -O /tmp/hdsentinel-020c-x64.zip
 sudo unzip /tmp/hdsentinel-020c-x64.zip -d ${vROOFSDIR}/usr/local/bin
