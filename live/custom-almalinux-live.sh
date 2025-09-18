@@ -34,7 +34,7 @@ mkdir -pv "$WORKDIR" "$MOUNTDIR"
 
 echo "[+] Скачиваем ISO..."
 echo "    [+] $ISO_URL --> $ISO_NAME"
-vCURL_OPTS="--progress-bar --user-agent \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36\" -L"
+vCURL_OPTS="--progress-bar --user-agent 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36' -L"
 [ -f "$ISO_NAME" ] || curl ${vCURL_OPTS} "$ISO_URL" -o "$ISO_NAME"
 
 echo "[+] Монтируем ISO..."
