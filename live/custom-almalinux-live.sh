@@ -71,6 +71,7 @@ else
     echo "    [+] vROOFSDIR: ${vROOFSDIR}..."
 fi
 
+# === НАЧАЛО кастомизации ===
 echo "[+] Настраиваем sshd..."
 echo "    [+] Включаем root, пароль и ключи..."
 sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' ${vROOFSDIR}/etc/ssh/sshd_config
@@ -115,7 +116,7 @@ else
     echo "    [-] Публичный ключ для liveuser/root отсутствует..."
 fi
 
-echo "[+] Настраиваем TMUX..."
+echo "[+] Настраиваем Tmux..."
 cat <<EOB | sudo tee ${vROOFSDIR}/home/liveuser/.tmux.conf ${vROOFSDIR}/root/.tmux.conf
 setw -g mouse on
 set-option -g history-limit 3000000
@@ -126,6 +127,7 @@ wget https://www.hdsentinel.com/hdslin/hdsentinel-020c-x64.zip -O /tmp/hdsentine
 sudo unzip /tmp/hdsentinel-020c-x64.zip -d ${vROOFSDIR}/usr/local/bin
 sudo chmod +x ${vROOFSDIR}/usr/local/bin/HDSentinel
 rm -fv /tmp/hdsentinel-020c-x64.zip
+# === ОКОНЧАНИЕ кастомизации ===
 
 sync
 sudo sync
