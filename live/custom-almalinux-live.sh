@@ -8,9 +8,9 @@ echo "1) AlmaLinux 8 x86_64"
 echo "2) AlmaLinux 9 x86_64"
 echo "3) AlmaLinux 10 x86_64"
 echo "4) AlmaLinux 10 x86_64_v2"
-read -p "Введите номер версии [1-4]: " vCHOICE
+read -p "Введите номер версии [1-4]: " CHOICE
 
-case ${vCHOICE} in
+case $CHOICE in
   1) vVERSION=8; vARCH=x86_64; ISO_URL="https://repo.almalinux.org/almalinux/${vVERSION}/live/${vARCH}/AlmaLinux-${vVERSION}-latest-${vARCH}-Live-GNOME-Mini.iso" ;;
   2) vVERSION=9; vARCH=x86_64; ISO_URL="https://repo.almalinux.org/almalinux/${vVERSION}/live/${vARCH}/AlmaLinux-${vVERSION}-latest-${vARCH}-Live-GNOME-Mini.iso" ;;
   3) vVERSION=10; vARCH=x86_64; ISO_URL="https://repo.almalinux.org/almalinux/${vVERSION}/live/${vARCH}/AlmaLinux-${vVERSION}-latest-${vARCH}-Live-GNOME.iso" ;;
