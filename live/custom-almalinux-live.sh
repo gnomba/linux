@@ -121,6 +121,7 @@ else
 fi
 
 echo "[+] Настраиваем Tmux..."
+mkdir -pv ${vROOFSDIR}/home/liveuser/.tmux.conf ${vROOFSDIR}/root/.tmux.conf
 cat <<EOB | sudo tee ${vROOFSDIR}/home/liveuser/.tmux.conf ${vROOFSDIR}/root/.tmux.conf
 setw -g mouse on
 set-option -g history-limit 3000000
