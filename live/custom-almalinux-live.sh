@@ -102,8 +102,10 @@ else
 fi
 
 echo "[+] Настраиваем TMUX..."
-echo -e "setw -g mouse on\nset-option -g history-limit 3000000" > ${vROOFSDIR}/home/liveuser/.tmux.conf
-echo -e "setw -g mouse on\nset-option -g history-limit 3000000" > ${vROOFSDIR}/root/.tmux.conf
+cat <<EOA | sudo tee ${vROOFSDIR}/home/liveuser/.tmux.conf ${vROOFSDIR}/root/.tmux.conf
+setw -g mouse on
+set-option -g history-limit 3000000
+EOA
 
 echo "[+] Добавляем HDSentinel..."
 wget https://www.hdsentinel.com/hdslin/hdsentinel-020c-x64.zip -O /tmp/hdsentinel-020c-x64.zip
