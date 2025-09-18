@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x
+set -e
 
 # === Выбор версии AlmaLinux ===
 echo "Выберите версию Live ISO:"
