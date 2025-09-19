@@ -34,7 +34,7 @@ mkdir -pv "$WORKDIR" "$MOUNTDIR"
 
 echo "[+] Скачиваем ISO..."
 echo "    [+] $ISO_URL --> $ISO_NAME"
-[ -f "$ISO_NAME" ] || curl --progress-bar --verbose --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36" -L "$ISO_URL" -o "$ISO_NAME"
+[ -f "$ISO_NAME" ] || curl --progress-bar --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36" -L "$ISO_URL" -o "$ISO_NAME"
 
 echo "[+] Монтируем ISO..."
 echo "    [+] $ISO_NAME --> $MOUNTDIR"
@@ -131,7 +131,7 @@ set-option -g history-limit 3000000
 EOB
 
 echo "[+] Добавляем HDSentinel..."
-wget https://www.hdsentinel.com/hdslin/hdsentinel-020c-x64.zip -O /tmp/hdsentinel-020c-x64.zip
+wget --quiet --show-progress https://www.hdsentinel.com/hdslin/hdsentinel-020c-x64.zip -O /tmp/hdsentinel-020c-x64.zip
 sudo unzip /tmp/hdsentinel-020c-x64.zip -d ${vROOFSDIR}/usr/local/bin
 sudo chmod +x ${vROOFSDIR}/usr/local/bin/HDSentinel
 rm -fv /tmp/hdsentinel-020c-x64.zip
