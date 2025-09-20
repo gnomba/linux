@@ -83,7 +83,7 @@ sudo sed -i 's/^#\?PubkeyAuthentication.*/PubkeyAuthentication yes/' ${vROOFSDIR
 sudo sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' ${vROOFSDIR}/etc/ssh/sshd_config
 
 echo "[+] Добавляем systemd unit для SSH..."
-cat <<EOA | sudo tee ${vROOFSDIR}/etc/systemd/system/live-ssh.service
+cat <<LIVESSHSERVICE | sudo tee ${vROOFSDIR}/etc/systemd/system/live-ssh.service
 [Unit]
 Description=Enable SSH in Live session
 After=network.target
@@ -97,44 +97,42 @@ ExecStart=/bin/systemctl start sshd
 
 [Install]
 WantedBy=multi-user.target
-EOA
+LIVESSHSERVICE
 
 sudo ln -s /etc/systemd/system/live-ssh.service ${vROOFSDIR}/etc/systemd/system/multi-user.target.wants/live-ssh.service
 
 echo "[+] Добавляем ключи..."
 if [ -f "$PUBKEY_FILE" ]; then
-    echo "    [+] Копируем публичный ключ для liveuser..."
-    sudo mkdir -pv ${vROOFSDIR}/home/liveuser/.ssh
-    sudo cp "$PUBKEY_FILE" ${vROOFSDIR}/home/liveuser/.ssh/authorized_keys
-    sudo chmod 700 ${vROOFSDIR}/home/liveuser/.ssh
-    sudo chmod 600 ${vROOFSDIR}/home/liveuser/.ssh/authorized_keys
-    sudo chown -R 1000:1000 ${vROOFSDIR}/home/liveuser/.ssh  # UID/GID liveuser
+    echo "    [+] Копируем публичный ключ в ${vROOFSDIR}/etc/skel/.ssh..."
+    sudo mkdir -pv ${vROOFSDIR}/etc/skel/.ssh
+    sudo cp "$PUBKEY_FILE" ${vROOFSDIR}/etc/skel/.ssh/authorized_keys
+    sudo chmod 700 ${vROOFSDIR}/etc/skel/.ssh
+    sudo chmod 600 ${vROOFSDIR}/etc/skel/.ssh/authorized_keys
+    sudo chown -R root:root ${vROOFSDIR}/etc/skel/.ssh
 
     echo "    [+] Копируем публичный ключ для root..."
     sudo mkdir -pv ${vROOFSDIR}/root/.ssh
     sudo cp "$PUBKEY_FILE" ${vROOFSDIR}/root/.ssh/authorized_keys
     sudo chmod 700 ${vROOFSDIR}/root/.ssh
     sudo chmod 600 ${vROOFSDIR}/root/.ssh/authorized_keys
-    sudo chown -R 0:0 ${vROOFSDIR}/root/.ssh
+    sudo chown -R root:root ${vROOFSDIR}/root/.ssh
 else
-    echo "    [-] Публичный ключ для liveuser/root отсутствует..."
+    echo "    [-] Публичный ключ отсутствует..."
 fi
 
 echo "[+] Настраиваем Tmux..."
-if [ ! -d "${vROOFSDIR}/home/liveuser" ]; then
-  sudo mkdir -pv ${vROOFSDIR}/home/liveuser/
-  sudo chown -R 1000:1000 ${vROOFSDIR}/home/liveuser  # UID/GID liveuser
-fi
-cat <<EOB | sudo tee ${vROOFSDIR}/home/liveuser/.tmux.conf ${vROOFSDIR}/root/.tmux.conf
+cat <<TMUXCONF | sudo tee ${vROOFSDIR}/etc/skel/.tmux.conf ${vROOFSDIR}/root/.tmux.conf
 setw -g mouse on
 set-option -g history-limit 3000000
-EOB
+TMUXCONF
 
 echo "[+] Добавляем HDSentinel..."
-wget --quiet --show-progress https://www.hdsentinel.com/hdslin/hdsentinel-020c-x64.zip -O /tmp/hdsentinel-020c-x64.zip
-sudo unzip /tmp/hdsentinel-020c-x64.zip -d ${vROOFSDIR}/usr/local/bin
+HDS_URL="https://www.hdsentinel.com/hdslin/hdsentinel-020c-x64.zip"
+HDS_ZIP="/tmp/hdsentinel-020c-x64.zip"
+wget --quiet --show-progress ${HDS_URL} -O ${HDS_ZIP}
+sudo unzip ${HDS_ZIP} -d ${vROOFSDIR}/usr/local/bin
 sudo chmod +x ${vROOFSDIR}/usr/local/bin/HDSentinel
-rm -fv /tmp/hdsentinel-020c-x64.zip
+rm -fv ${HDS_ZIP}
 # === ОКОНЧАНИЕ кастомизации ===
 
 sync
