@@ -20,6 +20,7 @@ esac
 
 # === Параметры ===
 ISO_NAME="AlmaLinux-${vVERSION}-${vARCH}-live-original.iso"
+ISO_INFO="${ISO_NAME//.iso/.txt}"
 CUSTOM_ISO="AlmaLinux-${vVERSION}-${vARCH}-live-ssh.iso"
 WORKDIR="$PWD/almalinux-live"
 MOUNTDIR="$PWD/iso-mount"
@@ -29,23 +30,34 @@ ROOTPASS="rootpass"    # пароль для root
 PUBKEY_FILE="$HOME/.ssh/id_rsa.pub"  # ваш публичный ключ
 
 # === Подготовка ===
-echo "[+] Создаём папки '$WORKDIR' '$MOUNTDIR'..."
-mkdir -pv "$WORKDIR" "$MOUNTDIR"
+echo "[+] Создаём '$WORKDIR' ..."
+mkdir -pv "$WORKDIR"
 
 echo "[+] Скачиваем ISO..."
 echo "    [+] $ISO_URL --> $ISO_NAME"
 [ -f "$ISO_NAME" ] || curl --progress-bar --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36" -L "$ISO_URL" -o "$ISO_NAME"
 
-echo "[+] Монтируем ISO..."
-echo "    [+] $ISO_NAME --> $MOUNTDIR"
-sudo mount -o loop "$ISO_NAME" "$MOUNTDIR"
+#echo "[+] Монтируем ISO..."
+#echo "    [+] $ISO_NAME --> $MOUNTDIR"
+#sudo mount -o loop "$ISO_NAME" "$MOUNTDIR"
 
-echo "[+] Копируем содержимое ISO..."
-echo "    [+] $MOUNTDIR/ --> $WORKDIR/)"
-sudo rsync -a "$MOUNTDIR/" "$WORKDIR/"
+#echo "[+] Копируем содержимое ISO..."
+#echo "    [+] $MOUNTDIR/ --> $WORKDIR/)"
+#sudo rsync -a "$MOUNTDIR/" "$WORKDIR/"
 
-echo "[+] Размонтируем ISO..."
-sudo umount -v "$MOUNTDIR"
+#echo "[+] Размонтируем ISO..."
+#sudo umount -v "$MOUNTDIR"
+
+echo "[+] Получение информации об образе..."
+xorriso -indev $ISO_NAME -toc -pvd_info > $ISO_INFO
+vVOLUMEID="$(grep 'Volume Id    : ' $ISO_INFO | sed 's/^Volume Id    : //')"; echo "vVOLUMEID=${vVOLUMEID}"
+vBOOTCATALOG="$(awk -F"'" '/Boot catalog : / {print $2}' $ISO_INFO | sed 's/\///')"; echo "vBOOTCATALOG=${vBOOTCATALOG}"
+vBOOTIMG="$(awk -F"'" '/boot_info_/ {print $2}' $ISO_INFO | sed 's/\///')"; echo "vBOOTIMG=${vBOOTIMG}"
+vBOOTEFI="$(awk -F"'" '/platform_id=/ {print $2}' $ISO_INFO | sed 's/\///')"; echo "vBOOTEFI=${vBOOTEFI}"
+
+echo "[+] Извлекаем содержимое ISO..."
+echo "    [+] $ISO_NAME --> $WORKDIR"
+xorriso -osirrox on -indev $ISO_NAME -extract / $WORKDIR
 
 echo "[+] Переходим в $WORKDIR..."
 cd "$WORKDIR"; pwd
@@ -76,6 +88,7 @@ else
 fi
 
 # === НАЧАЛО кастомизации ===
+
 echo "[+] Настраиваем sshd..."
 echo "    [+] Включаем root, пароль и ключи..."
 sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' ${vROOFSDIR}/etc/ssh/sshd_config
@@ -133,6 +146,19 @@ wget --quiet --show-progress ${HDS_URL} -O ${HDS_ZIP}
 sudo unzip ${HDS_ZIP} -d ${vROOFSDIR}/usr/local/bin
 sudo chmod +x ${vROOFSDIR}/usr/local/bin/HDSentinel
 rm -fv ${HDS_ZIP}
+
+#echo "[+] Добавляем Intel® Data Center Diagnostic Tool for Linux* on Intel® Xeon® Processors..."
+#echo "    [*] E5 v4 (Broadwell)"
+#echo "    [*] E7 v4 (Broadwell)"
+#echo "    [*] 1st Scalable (Skylake)"
+#echo "    [*] 2nd Scalable (Cascade Lake)"
+#echo "    [*] 3rd Scalable (Ice Lake and Cooper Lake)"
+#echo "    [*] 4th Scalable (Sapphire Rapids)"
+#echo "    [*] 5th Scalable (Emerald Rapids)"
+#echo "    [*] Xeon® 6 (Sierra Forest and Granite Rapids)"
+#DCDIAG_URL="https://repositories.intel.com/dcdt/dcdiag.x86_64.rpm"
+#wget --quiet --show-progress ${DCDIAG_URL} -P ${vROOFSDIR}/opt/
+
 # === ОКОНЧАНИЕ кастомизации ===
 
 sync
@@ -156,28 +182,41 @@ sudo rm -rf squashfs
 echo "[+] Собираем новый ISO..."
 if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
   sudo xorriso -as mkisofs -o "../$CUSTOM_ISO" \
-  -isohybrid-mbr isolinux/isolinux.bin \
-  -b isolinux/isolinux.bin \
-  -no-emul-boot -boot-load-size 4 -boot-info-table \
-  -eltorito-alt-boot -e images/efiboot.img -no-emul-boot \
+  -volid "${vVOLUMEID}" \
+  -isohybrid-mbr ${vBOOTIMG} \
+  -c ${vBOOTCATALOG} \
+  -b ${vBOOTIMG} \
+  -no-emul-boot \
+  -boot-load-size 4 \
+  -boot-info-table \
+  -eltorito-alt-boot \
+  -e ${vBOOTEFI} \
+  -no-emul-boot \
   .
   echo "    [+] Удаляем папку '${vROOFSDIR}'..."
   sudo rm -rf ${vROOFSDIR}
 else
   sudo xorriso -as mkisofs -o "../$CUSTOM_ISO" \
-  -no-emul-boot -boot-load-size 4 -boot-info-table \
-  -eltorito-alt-boot -e images/eltorito.img -no-emul-boot \
+  -volid "${vVOLUMEID}" \
+  -no-emul-boot \
+  -boot-load-size 4 \
+  -boot-info-table \
+  -eltorito-alt-boot \
+  -e ${vBOOTEFI} \
+  -no-emul-boot \
   .
 fi
 
 cd ..; pwd
 
-echo "[+] Удаляем папки '$WORKDIR' '$MOUNTDIR'..."
-sudo rm -rf $WORKDIR $MOUNTDIR
+echo "[+] Удаляем '$WORKDIR' '$ISO_INFO'..."
+sudo rm -rf $WORKDIR $ISO_INFO
 
 echo "[+] Готово! Новый ISO: $CUSTOM_ISO"
 echo "    Доступные пользователи:"
 echo "      liveuser / $PASSWORD"
 echo "      root     / $ROOTPASS"
+
+diff -u <(xorriso -indev $ISO_NAME -toc -pvd_info) <(xorriso -indev $CUSTOM_ISO -toc -pvd_info)
 
 exit 0
