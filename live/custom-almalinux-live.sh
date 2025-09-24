@@ -195,11 +195,8 @@ if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
   sudo rm -rf ${vROOFSDIR}
 else
   sudo xorriso -as mkisofs -o "../$CUSTOM_ISO" \
-  -volid "${vVOLUMEID}" \
-  -boot-load-size 4 \
-  -boot-info-table \
-  -eltorito-alt-boot \
-  -e ${vBOOTEFI} \
+  -volid "${vVOLUMEID}" -no-emul-boot -boot-load-size 4 -boot-info-table \
+  -eltorito-alt-boot -e ${vBOOTIMG} -no-emul-boot \
   .
 fi
 
