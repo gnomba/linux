@@ -118,7 +118,7 @@ sudo ln -s /etc/systemd/system/live-ssh.service ${vROOFSDIR}/etc/systemd/system/
 
 echo "[+] Отключаем selinux..."
 sudo find ${vROOFSDIR}/boot/loader/entries/ -type f -name "*.conf" -exec sudo sed -i 's/console=tty0/selinux=0 console=tty0/' {} +
-sudo grep -in 'selinux' ${vROOFSDIR}/boot/loader/entries/*.conf
+sudo grep -Rin 'selinux' ${vROOFSDIR}/boot/loader/entries/
 
 echo "[+] Добавляем ключи..."
 if [ -f "$PUBKEY_FILE" ]; then
