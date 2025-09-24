@@ -183,27 +183,25 @@ echo "[+] Собираем новый ISO..."
 if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
   sudo xorriso -as mkisofs -o "../$CUSTOM_ISO" \
   -volid "${vVOLUMEID}" \
-  -isohybrid-mbr ${vBOOTIMG} \
+  -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
   -c ${vBOOTCATALOG} \
-  -b ${vBOOTIMG} \
-  -no-emul-boot \
+  -b ${vBOOTIMG} -no-emul-boot \
   -boot-load-size 4 \
   -boot-info-table \
   -eltorito-alt-boot \
-  -e ${vBOOTEFI} \
-  -no-emul-boot \
+  -e ${vBOOTEFI} -no-emul-boot \
   .
   echo "    [+] Удаляем папку '${vROOFSDIR}'..."
   sudo rm -rf ${vROOFSDIR}
 else
   sudo xorriso -as mkisofs -o "../$CUSTOM_ISO" \
   -volid "${vVOLUMEID}" \
+  -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
   -no-emul-boot \
   -boot-load-size 4 \
   -boot-info-table \
   -eltorito-alt-boot \
-  -e ${vBOOTEFI} \
-  -no-emul-boot \
+  -e ${vBOOTEFI} -no-emul-boot \
   .
 fi
 
