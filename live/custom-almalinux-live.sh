@@ -196,7 +196,6 @@ if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
 else
   sudo xorriso -as mkisofs -o "../$CUSTOM_ISO" \
   -volid "${vVOLUMEID}" \
-  -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
   -no-emul-boot \
   -boot-load-size 4 \
   -boot-info-table \
