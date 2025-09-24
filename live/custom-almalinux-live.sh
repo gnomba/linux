@@ -190,7 +190,6 @@ if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
   -boot-info-table \
   -eltorito-alt-boot \
   -e ${vBOOTEFI} -no-emul-boot \
-  -joliet on \
   -boot_image gpt_iso_bootable \
   .
   echo "    [+] Удаляем папку '${vROOFSDIR}'..."
@@ -204,7 +203,6 @@ else
   -boot-info-table \
   -eltorito-alt-boot \
   -e ${vBOOTEFI} -no-emul-boot \
-  -joliet on \
   -boot_image gpt_iso_bootable \
   .
 fi
