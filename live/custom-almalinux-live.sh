@@ -97,6 +97,9 @@ sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' ${vROOF
 sudo sed -i 's/^#\?PermitEmptyPasswords.*/PermitEmptyPasswords no/' ${vROOFSDIR}/etc/ssh/sshd_config
 sudo chmod +r ${vROOFSDIR}/etc/ssh/sshd_config
 
+echo "[+] Отключаем selinux..."
+sudo sed -i 's/^SELINUX=.*$/SELINUX=disabled/' ${vROOFSDIR}/etc/selinux/config
+
 echo "[+] Добавляем systemd unit для SSH..."
 cat <<LIVESSHSERVICE | sudo tee ${vROOFSDIR}/etc/systemd/system/live-ssh.service
 [Unit]
@@ -115,10 +118,6 @@ WantedBy=multi-user.target
 LIVESSHSERVICE
 
 sudo ln -s /etc/systemd/system/live-ssh.service ${vROOFSDIR}/etc/systemd/system/multi-user.target.wants/live-ssh.service
-
-echo "[+] Отключаем selinux..."
-sudo find ${vROOFSDIR}/boot/loader/entries/ -type f -name "*.conf" -exec sudo sed -i 's/console=tty0/selinux=0 console=tty0/' {} +
-sudo grep -Rin 'selinux' ${vROOFSDIR}/boot/loader/entries/
 
 echo "[+] Добавляем ключи..."
 if [ -f "$PUBKEY_FILE" ]; then
