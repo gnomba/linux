@@ -95,6 +95,7 @@ sudo sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' ${vROOFSDIR}/etc/ssh/
 sudo sed -i 's/^#\?PubkeyAuthentication.*/PubkeyAuthentication yes/' ${vROOFSDIR}/etc/ssh/sshd_config
 sudo sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' ${vROOFSDIR}/etc/ssh/sshd_config
 sudo sed -i 's/^#\?PermitEmptyPasswords.*/PermitEmptyPasswords no/' ${vROOFSDIR}/etc/ssh/sshd_config
+sudo chmod +r ${vROOFSDIR}/etc/ssh/sshd_config
 
 echo "[+] Добавляем systemd unit для SSH..."
 cat <<LIVESSHSERVICE | sudo tee ${vROOFSDIR}/etc/systemd/system/live-ssh.service
