@@ -116,6 +116,9 @@ LIVESSHSERVICE
 
 sudo ln -s /etc/systemd/system/live-ssh.service ${vROOFSDIR}/etc/systemd/system/multi-user.target.wants/live-ssh.service
 
+echo "[+] Отключаем selinux..."
+sudo sed -i 's/console=tty0/selinux=0 console=tty0/' ${vROOFSDIR}/boot/loader/entries/*.conf
+
 echo "[+] Добавляем ключи..."
 if [ -f "$PUBKEY_FILE" ]; then
     echo "    [+] Копируем публичный ключ в ${vROOFSDIR}/etc/skel/.ssh..."
