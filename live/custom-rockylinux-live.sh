@@ -69,9 +69,6 @@ sudo unsquashfs ../LiveOS/squashfs.img
 echo "    [+] Переходим в squashfs-root..."
 cd squashfs-root; pwd
 
-read -p "Press Enter to continue..."
-echo "Continuing script execution."
-
 echo "[+] Версия RockyLinux: ${vVERSION}..."
 if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
     echo "    [+] Связываем файл LiveOS/rootfs.img с loop-устройством..."
@@ -169,6 +166,9 @@ rm -fv ${HDS_ZIP}
 
 sync
 sudo sync
+
+read -p "Press Enter to continue..."
+echo "Continuing script execution."
 
 if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
     echo "[+] Размонтируем '${vROOFSDIR}'..."
