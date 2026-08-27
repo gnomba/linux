@@ -150,6 +150,14 @@ sudo unzip ${HDS_ZIP} -d ${vROOFSDIR}/usr/local/bin
 sudo chmod +x ${vROOFSDIR}/usr/local/bin/HDSentinel
 rm -fv ${HDS_ZIP}
 
+# https://www.broadcom.com/support/download-search?dk=&pa=Management+Software+and+Tools&pf=Legacy+RAID+Controllers&pg=Legacy+Products&pn=All&po=
+#SCLI_VER="007.3703.0000.0000"
+#SCLI_Rev="MR%207.37"
+#echo "[+] Добавляем StorCLI ${SCLI_VER}..."
+#SCLI_URL="https://docs.broadcom.com/docs-and-downloads/${SCLI_VER}_${SCLI_Rev}_Storcli.zip"
+#SCLI_ZIP="/tmp/Storcli_${SCLI_VER}.zip"
+#wget --quiet --show-progress ${SCLI_URL} -O ${SCLI_ZIP}
+
 #echo "[+] Добавляем Intel® Data Center Diagnostic Tool for Linux* on Intel® Xeon® Processors..."
 #echo "    [*] E5 v4 (Broadwell)"
 #echo "    [*] E7 v4 (Broadwell)"
