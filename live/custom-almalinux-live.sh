@@ -117,7 +117,7 @@ ExecStart=/bin/systemctl start sshd
 WantedBy=multi-user.target
 LIVESSHSERVICE
 
-sudo ln -s /etc/systemd/system/live-ssh.service ${vROOFSDIR}/etc/systemd/system/multi-user.target.wants/live-ssh.service
+sudo ln -sf /etc/systemd/system/live-ssh.service ${vROOFSDIR}/etc/systemd/system/multi-user.target.wants/live-ssh.service
 
 echo "[+] Добавляем ключи..."
 if [ -f "$PUBKEY_FILE" ]; then
@@ -152,32 +152,81 @@ sudo unzip ${HDS_ZIP} -d ${vROOFSDIR}/usr/local/bin
 sudo chmod +x ${vROOFSDIR}/usr/local/bin/HDSentinel
 rm -fv ${HDS_ZIP}
 
-# https://www.broadcom.com/support/download-search?dk=&pa=Management+Software+and+Tools&pf=Legacy+RAID+Controllers&pg=Legacy+Products&pn=All&po=
-#SCLI_VER="007.3703.0000.0000"
-#SCLI_Rev="MR%207.37"
-#echo "[+] Добавляем StorCLI ${SCLI_VER}..."
-#SCLI_URL="https://docs.broadcom.com/docs-and-downloads/${SCLI_VER}_${SCLI_Rev}_Storcli.zip"
-#SCLI_ZIP="/tmp/Storcli_${SCLI_VER}.zip"
-#wget --quiet --show-progress ${SCLI_URL} -O ${SCLI_ZIP}
+# свежии версии искать тут --> https://www.broadcom.com/support/download-search?dk=&pa=Management+Software+and+Tools&pf=Legacy+RAID+Controllers&pg=Legacy+Products&pn=All&po=
+SCLI_VER="007.3703.0000.0000"
+SCLI_Rev="MR%207.37"
+echo "[+] Добавляем StorCLI ${SCLI_VER}..."
+SCLI_URL="https://docs.broadcom.com/docs-and-downloads/${SCLI_VER}_${SCLI_Rev}_Storcli.zip"
+SCLI_ZIP="/tmp/Storcli_${SCLI_VER}.zip"
+wget --quiet --show-progress ${SCLI_URL} -O ${SCLI_ZIP}
+unzip -o ${SCLI_ZIP} -d /tmp/
+unzip -o /tmp/storcli_rel/Unified_storcli_all_os.zip -d /tmp
+sudo mv -fv /tmp/Unified_storcli_all_os/Linux/storcli-${SCLI_VER}-1.noarch.rpm ${vROOFSDIR}/opt/
 
-#echo "[+] Добавляем Intel® Data Center Diagnostic Tool for Linux* on Intel® Xeon® Processors..."
-#echo "    [*] E5 v4 (Broadwell)"
-#echo "    [*] E7 v4 (Broadwell)"
-#echo "    [*] 1st Scalable (Skylake)"
-#echo "    [*] 2nd Scalable (Cascade Lake)"
-#echo "    [*] 3rd Scalable (Ice Lake and Cooper Lake)"
-#echo "    [*] 4th Scalable (Sapphire Rapids)"
-#echo "    [*] 5th Scalable (Emerald Rapids)"
-#echo "    [*] Xeon® 6 (Sierra Forest and Granite Rapids)"
-#DCDIAG_URL="https://repositories.intel.com/dcdt/dcdiag.x86_64.rpm"
-#wget --quiet --show-progress ${DCDIAG_URL} -P ${vROOFSDIR}/opt/
+echo "[+] Добавляем Intel® Data Center Diagnostic Tool for Linux* on Intel® Xeon® Processors..."
+echo "    [*] E5 v4 (Broadwell)"
+echo "    [*] E7 v4 (Broadwell)"
+echo "    [*] 1st Scalable (Skylake)"
+echo "    [*] 2nd Scalable (Cascade Lake)"
+echo "    [*] 3rd Scalable (Ice Lake and Cooper Lake)"
+echo "    [*] 4th Scalable (Sapphire Rapids)"
+echo "    [*] 5th Scalable (Emerald Rapids)"
+echo "    [*] Xeon® 6 (Sierra Forest, Granite Rapids, Granite Rapids-D)"
+DCDIAG_URL="https://repositories.intel.com/dcdt/dcdiag.x86_64.rpm"
+sudo wget --quiet --show-progress ${DCDIAG_URL} -P ${vROOFSDIR}/opt/
+
+echo "[+] Добавляем автоустановку rpm-пакетов из /opt"
+cat <<INSTRPM | sudo tee ${vROOFSDIR}/usr/local/bin/install-opt-rpms.sh
+#!/bin/bash
+
+# Проверяем наличие rpm-файлов в директории /opt
+shopt -s nullglob
+rpms=(/opt/*.rpm)
+
+if [ \${#rpms[@]} -eq 0 ]; then
+    echo "RPM-пакеты в /opt не найдены."
+    exit 0
+fi
+
+echo "Найдено пакетов: \${#rpms[@]}. Начинаем установку..."
+
+# Установка всех пакетов через dnf
+dnf install -y "\${rpms[@]}"
+
+# Опционально: создаем каталог для архива и перемещаем установленные RPM
+mkdir -pv /opt/installed
+mv "\${rpms[@]}" /opt/installed/
+
+echo "Установка завершена, файлы перемещены в /opt/installed/"
+INSTRPM
+sudo chown root:root ${vROOFSDIR}/usr/local/bin/install-opt-rpms.sh
+sudo chmod +x ${vROOFSDIR}/usr/local/bin/install-opt-rpms.sh
+
+cat <<INSTRPMSRV | sudo tee ${vROOFSDIR}/etc/systemd/system/opt-rpm-installer.service
+[Unit]
+Description=Auto-install RPM packages from /opt on boot
+After=local-fs.target
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/install-opt-rpms.sh
+RemainAfterExit=true
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+INSTRPMSRV
+
+sudo ln -sf /etc/systemd/system/opt-rpm-installer.service ${vROOFSDIR}/etc/systemd/system/multi-user.target.wants/opt-rpm-installer.service
 
 # === ОКОНЧАНИЕ кастомизации ===
 
 sync
 sudo sync
 
-read -p "Press Enter to continue..."
+read -p "Press Enter to continue..." # sudo umount -fv /mnt/rootfs; sudo losetup -D
 echo "Continuing script execution."
 
 if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
