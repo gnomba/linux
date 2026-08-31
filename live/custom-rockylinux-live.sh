@@ -10,9 +10,9 @@ echo "3) RockyLinux 10 x86_64"
 read -p "Введите номер версии [1-3]: " CHOICE
 
 case $CHOICE in
-  1) vVERSION=8; vARCH=x86_64; ISO_URL="https://dl.rockylinux.org/pub/rocky/${vVERSION}/live/${vARCH}/Rocky-${vVERSION}-Workstation-Lite-${vARCH}-latest.iso" ;;
-  2) vVERSION=9; vARCH=x86_64; ISO_URL="https://dl.rockylinux.org/pub/rocky/${vVERSION}/live/${vARCH}/Rocky-${vVERSION}-XFCE-${vARCH}-latest.iso" ;;
-  3) vVERSION=10; vARCH=x86_64; ISO_URL="https://dl.rockylinux.org/pub/rocky/${vVERSION}/live/${vARCH}/Rocky-${vVERSION}-Workstation-Lite-${vARCH}-latest.iso" ;;
+  1) vVERSION=8; vARCH=x86_64; ISO_URL="https://mirror.yandex.ru/rockylinux/${vVERSION}/live/${vARCH}/Rocky-${vVERSION}-Workstation-Lite-${vARCH}-latest.iso" ;;
+  2) vVERSION=9; vARCH=x86_64; ISO_URL="https://mirror.yandex.ru/rockylinux/${vVERSION}/live/${vARCH}/Rocky-${vVERSION}-XFCE-${vARCH}-latest.iso" ;;
+  3) vVERSION=10; vARCH=x86_64; ISO_URL="https://mirror.yandex.ru/rockylinux/${vVERSION}/live/${vARCH}/Rocky-${vVERSION}-Workstation-Lite-${vARCH}-latest.iso" ;;
   *) echo "Неверный выбор"; exit 1 ;;
 esac
 
@@ -151,9 +151,9 @@ sudo chmod +x ${vROOFSDIR}/usr/local/bin/HDSentinel
 rm -fv ${HDS_ZIP}
 
 # свежии версии искать тут --> https://www.broadcom.com/support/download-search?dk=&pa=Management+Software+and+Tools&pf=Legacy+RAID+Controllers&pg=Legacy+Products&pn=All&po=
+echo "[+] Добавляем StorCLI ${SCLI_VER}..."
 SCLI_VER="007.3703.0000.0000"
 SCLI_Rev="MR%207.37"
-echo "[+] Добавляем StorCLI ${SCLI_VER}..."
 SCLI_URL="https://docs.broadcom.com/docs-and-downloads/${SCLI_VER}_${SCLI_Rev}_Storcli.zip"
 SCLI_ZIP="/tmp/Storcli_${SCLI_VER}.zip"
 wget --quiet --show-progress ${SCLI_URL} -O ${SCLI_ZIP}
@@ -173,6 +173,21 @@ echo "    [*] Xeon® 6 (Sierra Forest, Granite Rapids, Granite Rapids-D)"
 DCDIAG_URL="https://repositories.intel.com/dcdt/dcdiag.x86_64.rpm"
 sudo wget --quiet --show-progress ${DCDIAG_URL} -P ${vROOFSDIR}/opt/
 
+echo "[+] Настраиваем репозитории Yandex и подключаем CRB/PowerTools..."
+echo "    [+] Заменяем стандартные зеркала на mirror.yandex.ru во всех *.repo файлах"
+sudo sed -i -e 's|^mirrorlist=|#mirrorlist=|g' \
+            -e 's|^#baseurl=http://repo.almalinux.org/almalinux/|baseurl=https://mirror.yandex.ru/almalinux/|g' \
+            ${vROOFSDIR}/etc/yum.repos.d/almalinux*.repo
+echo "    [+] Включаем CRB / PowerTools репозиторий в зависимости от версии"
+if [ -f "${vROOFSDIR}/etc/yum.repos.d/almalinux-powertools.repo" ]; then
+    echo "        [+] Для AlmaLinux 8 (Powertools)"
+    sudo sed -i '/^\[powertools\]/,/^\[/ s/enabled=0/enabled=1/' ${vROOFSDIR}/etc/yum.repos.d/almalinux-powertools.repo
+fi
+if [ -f "${vROOFSDIR}/etc/yum.repos.d/almalinux-crb.repo" ]; then
+    echo "        [+] Для AlmaLinux 9 и 10 (CRB)"
+    sudo sed -i '/^\[crb\]/,/^\[/ s/enabled=0/enabled=1/' ${vROOFSDIR}/etc/yum.repos.d/almalinux-crb.repo
+fi
+
 echo "[+] Добавляем автоустановку rpm-пакетов из /opt"
 cat <<INSTRPM | sudo tee ${vROOFSDIR}/usr/local/bin/install-opt-rpms.sh
 #!/bin/bash
@@ -189,13 +204,9 @@ fi
 echo "Найдено пакетов: \${#rpms[@]}. Начинаем установку..."
 
 # Установка всех пакетов через dnf
-dnf install -y "\${rpms[@]}"
+dnf install -y "\${rpms[@]}" && rm -fv "\${rpms[@]}"
 
-# Опционально: создаем каталог для архива и перемещаем установленные RPM
-mkdir -pv /opt/installed
-mv "\${rpms[@]}" /opt/installed/
-
-echo "Установка завершена, файлы перемещены в /opt/installed/"
+ln -sf /opt/MegaRAID/storcli/storcli64 /usr/local/bin/storcli
 INSTRPM
 sudo chown root:root ${vROOFSDIR}/usr/local/bin/install-opt-rpms.sh
 sudo chmod +x ${vROOFSDIR}/usr/local/bin/install-opt-rpms.sh
