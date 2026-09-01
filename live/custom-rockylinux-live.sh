@@ -62,7 +62,7 @@ cd "$WORKDIR"; pwd
 
 echo "[+] Распаковываем squashfs..."
 echo "    [+] Создаём папку squashfs..."
-mkdir -v squashfs
+sudo mkdir -v squashfs
 echo "    [+] Переходим в squashfs..."
 cd squashfs; pwd
 sudo unsquashfs ../LiveOS/squashfs.img
@@ -72,8 +72,8 @@ cd squashfs-root; pwd
 
 echo "[+] Версия RockyLinux: ${vVERSION}..."
 if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
-    echo "    [+] Связываем файл LiveOS/rootfs.img с loop-устройством..."
-    sudo losetup --find --partscan --show LiveOS/rootfs.img
+    echo "    [+] Связываем файл LiveOS/squashfs.img с loop-устройством..."
+    sudo losetup --find --partscan --show LiveOS/squashfs.img
     vLOOPDEV="$(sudo losetup -l | grep rootfs | awk '{print $1}')"
     echo "    [+] Loop-устройство: ${vLOOPDEV}..."
     vROOFSDIR="/mnt/rootfs"

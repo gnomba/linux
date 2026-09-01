@@ -69,6 +69,7 @@ echo "    [+] Переходим в squashfs..."
 cd squashfs; pwd
 sudo unsquashfs ../LiveOS/squashfs.img
 echo "    [+] Переходим в squashfs-root..."
+sudo chmod +rx squashfs-root
 cd squashfs-root; pwd
 
 echo "[+] Версия AlmaLinux: ${vVERSION}..."
