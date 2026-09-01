@@ -178,7 +178,7 @@ sudo wget --quiet --show-progress ${DCDIAG_URL} -P ${vROOFSDIR}/opt/
 echo "[+] Настраиваем репозитории Yandex и подключаем CRB/PowerTools..."
 echo "    [+] Заменяем стандартные зеркала на mirror.yandex.ru во всех *.repo файлах"
 sudo sed -i -e 's|^mirrorlist=|#mirrorlist=|g' \
-            -e 's|^#baseurl=http://repo.almalinux.org/almalinux/|baseurl=https://mirror.yandex.ru/almalinux/|g' \
+            -e 's|^# baseurl=https://repo.almalinux.org/almalinux/|baseurl=https://mirror.yandex.ru/almalinux/|g' \
             ${vROOFSDIR}/etc/yum.repos.d/almalinux*.repo
 echo "    [+] Включаем CRB / PowerTools репозиторий в зависимости от версии"
 if [ -f "${vROOFSDIR}/etc/yum.repos.d/almalinux-powertools.repo" ]; then

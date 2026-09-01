@@ -62,11 +62,12 @@ cd "$WORKDIR"; pwd
 
 echo "[+] Распаковываем squashfs..."
 echo "    [+] Создаём папку squashfs..."
-sudo mkdir -v squashfs
+mkdir -v squashfs
 echo "    [+] Переходим в squashfs..."
 cd squashfs; pwd
 sudo unsquashfs ../LiveOS/squashfs.img
 echo "    [+] Переходим в squashfs-root..."
+sudo chmod +rx squashfs-root
 cd squashfs-root; pwd
 
 echo "[+] Версия RockyLinux: ${vVERSION}..."
@@ -176,16 +177,16 @@ sudo wget --quiet --show-progress ${DCDIAG_URL} -P ${vROOFSDIR}/opt/
 echo "[+] Настраиваем репозитории Yandex и подключаем CRB/PowerTools..."
 echo "    [+] Заменяем стандартные зеркала на mirror.yandex.ru во всех *.repo файлах"
 sudo sed -i -e 's|^mirrorlist=|#mirrorlist=|g' \
-            -e 's|^#baseurl=http://repo.almalinux.org/almalinux/|baseurl=https://mirror.yandex.ru/almalinux/|g' \
-            ${vROOFSDIR}/etc/yum.repos.d/almalinux*.repo
+            -e 's|^#baseurl=http://dl.rockylinux.org/\$contentdir/|baseurl=https://mirror.yandex.ru/rockylinux/|g' \
+            ${vROOFSDIR}/etc/yum.repos.d/[Rr]ocky*.repo
 echo "    [+] Включаем CRB / PowerTools репозиторий в зависимости от версии"
-if [ -f "${vROOFSDIR}/etc/yum.repos.d/almalinux-powertools.repo" ]; then
-    echo "        [+] Для AlmaLinux 8 (Powertools)"
-    sudo sed -i '/^\[powertools\]/,/^\[/ s/enabled=0/enabled=1/' ${vROOFSDIR}/etc/yum.repos.d/almalinux-powertools.repo
+if [ -f "${vROOFSDIR}/etc/yum.repos.d/Rocky-PowerTools.repo" ]; then
+    echo "        [+] Для RockyLinux 8 (Powertools)"
+    sudo sed -i '/^\[powertools\]/,/^\[/ s/enabled=0/enabled=1/' ${vROOFSDIR}/etc/yum.repos.d/Rocky-PowerTools.repo
 fi
-if [ -f "${vROOFSDIR}/etc/yum.repos.d/almalinux-crb.repo" ]; then
-    echo "        [+] Для AlmaLinux 9 и 10 (CRB)"
-    sudo sed -i '/^\[crb\]/,/^\[/ s/enabled=0/enabled=1/' ${vROOFSDIR}/etc/yum.repos.d/almalinux-crb.repo
+if [ -f "${vROOFSDIR}/etc/yum.repos.d/rocky.repo" ]; then
+    echo "        [+] Для RockyLinux 9 и 10 (CRB) уже включен!!!"
+    #sudo sed -i '/^\[crb\]/,/^\[/ s/enabled=0/enabled=1/' ${vROOFSDIR}/etc/yum.repos.d/rocky.repo
 fi
 
 echo "[+] Добавляем автоустановку rpm-пакетов из /opt"
