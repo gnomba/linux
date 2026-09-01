@@ -32,12 +32,12 @@ echo "[+] Создаём '$WORKDIR' ..."
 mkdir -pv "$WORKDIR"
 
 echo "[+] Скачиваем ISO..."
-echo "    [+] $ISO_URL --> $ISO_NAME"
-[ -f "$ISO_NAME" ] || curl --progress-bar --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36" -L "$ISO_URL" -o "$ISO_NAME"
+echo "    [+] ${ISO_URL} --> ${ISO_NAME}"
+[ -f "${ISO_NAME}" ] || curl --progress-bar --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36" -L "${ISO_URL}" -o "${ISO_NAME}"
 
 #echo "[+] Монтируем ISO..."
-#echo "    [+] $ISO_NAME --> $MOUNTDIR"
-#sudo mount -o loop "$ISO_NAME" "$MOUNTDIR"
+#echo "    [+] ${ISO_NAME} --> $MOUNTDIR"
+#sudo mount -o loop "${ISO_NAME}" "$MOUNTDIR"
 
 #echo "[+] Копируем содержимое ISO..."
 #echo "    [+] $MOUNTDIR/ --> $WORKDIR/)"
@@ -47,15 +47,15 @@ echo "    [+] $ISO_URL --> $ISO_NAME"
 #sudo umount -v "$MOUNTDIR"
 
 echo "[+] Получение информации об образе..."
-xorriso -indev $ISO_NAME -toc -pvd_info > $ISO_INFO
-vVOLUMEID="$(grep 'Volume Id    : ' $ISO_INFO | sed 's/^Volume Id    : //')"; echo "vVOLUMEID=${vVOLUMEID}"
-vBOOTCATALOG="$(awk -F"'" '/Boot catalog : / {print $2}' $ISO_INFO | sed 's/\///')"; echo "vBOOTCATALOG=${vBOOTCATALOG}"
-vBOOTIMG="$(awk -F"'" '/boot_info_/ {print $2}' $ISO_INFO | sed 's/\///')"; echo "vBOOTIMG=${vBOOTIMG}"
-vBOOTEFI="$(awk -F"'" '/platform_id=/ {print $2}' $ISO_INFO | sed 's/\///')"; echo "vBOOTEFI=${vBOOTEFI}"
+xorriso -indev ${ISO_NAME} -toc -pvd_info > ${ISO_INFO}
+vVOLUMEID="$(grep 'Volume Id    : ' ${ISO_INFO} | sed 's/^Volume Id    : //')"; echo "vVOLUMEID=${vVOLUMEID}"
+vBOOTCATALOG="$(awk -F"'" '/Boot catalog : / {print $2}' ${ISO_INFO} | sed 's/\///')"; echo "vBOOTCATALOG=${vBOOTCATALOG}"
+vBOOTIMG="$(awk -F"'" '/boot_info_/ {print $2}' ${ISO_INFO} | sed 's/\///')"; echo "vBOOTIMG=${vBOOTIMG}"
+vBOOTEFI="$(awk -F"'" '/platform_id=/ {print $2}' ${ISO_INFO} | sed 's/\///')"; echo "vBOOTEFI=${vBOOTEFI}"
 
 echo "[+] Извлекаем содержимое ISO..."
-echo "    [+] $ISO_NAME --> $WORKDIR"
-xorriso -osirrox on -indev $ISO_NAME -extract / $WORKDIR
+echo "    [+] ${ISO_NAME} --> $WORKDIR"
+xorriso -osirrox on -indev ${ISO_NAME} -extract / $WORKDIR
 
 echo "[+] Переходим в $WORKDIR..."
 cd "$WORKDIR"; pwd
@@ -255,8 +255,15 @@ echo "[+] Удаляем папку squashfs..."
 sudo rm -rf squashfs
 
 echo "[+] Собираем новый ISO..."
+echo "vVERSION=${vVERSION}"
+echo "CUSTOM_ISO=${CUSTOM_ISO}"
+echo "vVOLUMEID=${vVOLUMEID}"
+echo "vBOOTCATALOG=${vBOOTCATALOG}"
+echo "vBOOTIMG=${vBOOTIMG}"
+echo "vBOOTEFI=${vBOOTEFI}"
+read -p "Press Enter to continue..."
 if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
-  sudo xorriso -as mkisofs -o "../$CUSTOM_ISO" \
+  sudo xorriso -as mkisofs -o "../${CUSTOM_ISO}" \
   -volid "${vVOLUMEID}" \
   -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
   -c ${vBOOTCATALOG} \
@@ -269,7 +276,7 @@ if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
   echo "    [+] Удаляем папку '${vROOFSDIR}'..."
   sudo rm -rf ${vROOFSDIR}
 else
-  sudo xorriso -as mkisofs -o "../$CUSTOM_ISO" \
+  sudo xorriso -as mkisofs -o "../${CUSTOM_ISO}" \
   -volid "${vVOLUMEID}" -no-emul-boot -boot-load-size 4 -boot-info-table \
   -eltorito-alt-boot -e ${vBOOTIMG} -no-emul-boot \
   .
@@ -277,14 +284,14 @@ fi
 
 cd ..; pwd
 
-echo "[+] Удаляем '$WORKDIR' '$ISO_INFO'..."
-sudo rm -rf $WORKDIR $ISO_INFO
+echo "[+] Удаляем '$WORKDIR' '${ISO_INFO}'..."
+sudo rm -rf $WORKDIR ${ISO_INFO}
 
-echo "[+] Готово! Новый ISO: $CUSTOM_ISO"
+echo "[+] Готово! Новый ISO: ${CUSTOM_ISO}"
 echo "    Доступные пользователи:"
 echo "      liveuser / $PASSWORD"
 echo "      root     / $ROOTPASS"
 
-diff -u <(xorriso -indev $ISO_NAME -toc -pvd_info) <(xorriso -indev $CUSTOM_ISO -toc -pvd_info)
+diff -u <(xorriso -indev ${ISO_NAME} -toc -pvd_info) <(xorriso -indev ${CUSTOM_ISO} -toc -pvd_info)
 
 exit 0
