@@ -2,6 +2,61 @@
 
 set -e
 
+# Исходный список пакетов через пробел
+PACKAGES="xorriso "
+PACKAGES_TO_INSTALL=""
+# Функция для проверки, установлен ли конкретный пакет
+is_package_installed() {
+    local pkg=$1
+    if command -v apt-get &> /dev/null; then
+        dpkg -s "${pkg}" &> /dev/null
+    elif command -v dnf &> /dev/null || command -v yum &> /dev/null; then
+        rpm -q "${pkg}" &> /dev/null
+    elif command -v pacman &> /dev/null; then
+        pacman -Qi "${pkg}" &> /dev/null
+    elif command -v zypper &> /dev/null; then
+        rpm -q "${pkg}" &> /dev/null
+    else
+        return 1
+    fi
+}
+
+# 1. Фильтруем список пакетов
+for pkg in $PACKAGES; do
+    if is_package_installed "${pkg}"; then
+        echo "Пакет [${pkg}] уже установлен. Пропускаем."
+    else
+        PACKAGES_TO_INSTALL="${PACKAGES_TO_INSTALL} ${pkg}"
+    fi
+done
+
+# 2. Если есть неустановленные пакеты — запускаем установку
+if [ -n "${PACKAGES_TO_INSTALL}" ]; then
+    echo "Найдены неустановленные пакеты. Начинаем установку: ${PACKAGES_TO_INSTALL}"
+
+    if command -v apt-get &> /dev/null; then
+        echo "Обнаружен пакетный менеджер: APT (Debian/Ubuntu)"
+        sudo apt-get update && sudo apt-get install -y ${PACKAGES_TO_INSTALL}
+    elif command -v dnf &> /dev/null; then
+        echo "Обнаружен пакетный менеджер: DNF (Fedora 22+ / RHEL 8+)"
+        sudo dnf install -y ${PACKAGES_TO_INSTALL}
+    elif command -v yum &> /dev/null; then
+        echo "Обнаружен пакетный менеджер: YUM (Fedora < 17 / RHEL 6/7)"
+        sudo yum install -y ${PACKAGES_TO_INSTALL}
+    elif command -v pacman &> /dev/null; then
+        echo "Обнаружен пакетный менеджер: Pacman (Arch Linux)"
+        sudo pacman -Sy --noconfirm ${PACKAGES_TO_INSTALL}
+    elif command -v zypper &> /dev/null; then
+        echo "Обнаружен пакетный менеджер: Zypper (openSUSE)"
+        sudo zypper install -y ${PACKAGES_TO_INSTALL}
+    else
+        echo "Ошибка: Поддерживаемый пакетный менеджер не найден для установки: ${PACKAGES_TO_INSTALL}"
+        exit 1 # Здесь скрипт прервется только в том случае, если пакеты НАДО поставить, но нечем
+    fi
+else
+    echo "Все пакеты из списка уже установлены. Установка не требуется."
+fi
+
 # === Выбор версии AlmaLinux ===
 echo "Выберите версию Live ISO:"
 echo "1) AlmaLinux 8 x86_64"
