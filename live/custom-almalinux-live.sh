@@ -352,15 +352,15 @@ if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
   echo "    [+] Удаляем папку '${vROOFSDIR}'..."
   sudo rm -rf ${vROOFSDIR}
 else
-  sudo xorriso -as mkisofs -o "../${CUSTOM_ISO}" \
+  sudo xorriso \
   -indev "../${ISO_NAME}" \
+  -outdev "../${CUSTOM_ISO}" \
   -volid "${vVOLUMEID}" \
-  -isohybrid-mbr "${vISOHDPFX}" \
-  -no-emul-boot -boot-load-size 4 -boot-info-table \
-  -eltorito-alt-boot \
   -boot_image any replay \
-  -J -joliet-long -r \
-  .
+  -compliance joliet_long_names \
+  -map . /
+  echo "    [+] Удаляем папку '${vROOFSDIR}'..."
+  sudo rm -rf ${vROOFSDIR} || true
 fi
 
 cd ..; pwd
