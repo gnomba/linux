@@ -2,8 +2,10 @@
 
 set -e
 
+WGET_USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+
 # Исходный список пакетов через пробел
-PACKAGES="xorriso "
+PACKAGES="curl kpartx wget xorriso unzip isolinux syslinux-common"
 PACKAGES_TO_INSTALL=""
 # Функция для проверки, установлен ли конкретный пакет
 is_package_installed() {
@@ -36,19 +38,19 @@ if [ -n "${PACKAGES_TO_INSTALL}" ]; then
 
     if command -v apt-get &> /dev/null; then
         echo "Обнаружен пакетный менеджер: APT (Debian/Ubuntu)"
-        sudo apt-get update && sudo apt-get install -y ${PACKAGES_TO_INSTALL}
+        sudo apt-get update && sudo apt-get install -y ${PACKAGES_TO_INSTALL} isolinux syslinux-common
     elif command -v dnf &> /dev/null; then
         echo "Обнаружен пакетный менеджер: DNF (Fedora 22+ / RHEL 8+)"
-        sudo dnf install -y ${PACKAGES_TO_INSTALL}
+        sudo dnf install -y ${PACKAGES_TO_INSTALL} syslinux-extlinux syslinux
     elif command -v yum &> /dev/null; then
         echo "Обнаружен пакетный менеджер: YUM (Fedora < 17 / RHEL 6/7)"
-        sudo yum install -y ${PACKAGES_TO_INSTALL}
+        sudo yum install -y ${PACKAGES_TO_INSTALL} syslinux-extlinux syslinux
     elif command -v pacman &> /dev/null; then
         echo "Обнаружен пакетный менеджер: Pacman (Arch Linux)"
-        sudo pacman -Sy --noconfirm ${PACKAGES_TO_INSTALL}
+        sudo pacman -Sy --noconfirm ${PACKAGES_TO_INSTALL} syslinux
     elif command -v zypper &> /dev/null; then
         echo "Обнаружен пакетный менеджер: Zypper (openSUSE)"
-        sudo zypper install -y ${PACKAGES_TO_INSTALL}
+        sudo zypper install -y ${PACKAGES_TO_INSTALL} syslinux
     else
         echo "Ошибка: Поддерживаемый пакетный менеджер не найден для установки: ${PACKAGES_TO_INSTALL}"
         exit 1 # Здесь скрипт прервется только в том случае, если пакеты НАДО поставить, но нечем
@@ -56,6 +58,11 @@ if [ -n "${PACKAGES_TO_INSTALL}" ]; then
 else
     echo "Все пакеты из списка уже установлены. Установка не требуется."
 fi
+
+# Определяем где лежит isohdpfx.bin
+echo "[+] Определяем где лежит isohdpfx.bin ..."
+vISOHDPFX="$(find /usr/ -name isohdpfx.bin 2>/dev/null | head -n 1)"
+echo "    [+] ${vISOHDPFX} ..."
 
 # === Выбор версии RockyLinux ===
 echo "Выберите версию Live ISO:"
@@ -107,6 +114,7 @@ vVOLUMEID="$(grep 'Volume Id    : ' ${ISO_INFO} | sed 's/^Volume Id    : //')"; 
 vBOOTCATALOG="$(awk -F"'" '/Boot catalog : / {print $2}' ${ISO_INFO} | sed 's/\///')"; echo "vBOOTCATALOG=${vBOOTCATALOG}"
 vBOOTIMG="$(awk -F"'" '/boot_info_/ {print $2}' ${ISO_INFO} | sed 's/\///')"; echo "vBOOTIMG=${vBOOTIMG}"
 vBOOTEFI="$(awk -F"'" '/platform_id=/ {print $2}' ${ISO_INFO} | sed 's/\///')"; echo "vBOOTEFI=${vBOOTEFI}"
+echo "vISOHDPFX=${vISOHDPFX}"
 
 echo "[+] Извлекаем содержимое ISO..."
 echo "    [+] ${ISO_NAME} --> $WORKDIR"
@@ -120,15 +128,17 @@ echo "    [+] Создаём папку squashfs..."
 sudo mkdir -v squashfs
 echo "    [+] Переходим в squashfs..."
 cd squashfs; pwd
-sudo unsquashfs ../LiveOS/squashfs.img
+IMG_FILE=$(find ../LiveOS/ -type f -exec du -h {} + | sort -rh | head -n 1 | awk '{print $2}') && file "${IMG_FILE}" | grep -q "Squashfs filesystem" && echo "Успешно: ${IMG_FILE} содержит Squashfs" || (echo "Ошибка: Файл не найден или не является Squashfs"; exit 1)
+sudo unsquashfs ${IMG_FILE}
 echo "    [+] Переходим в squashfs-root..."
 sudo chmod +rx squashfs-root
 cd squashfs-root; pwd
 
 echo "[+] Версия RockyLinux: ${vVERSION}..."
 if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
-    echo "    [+] Связываем файл LiveOS/squashfs.img с loop-устройством..."
-    sudo losetup --find --partscan --show LiveOS/squashfs.img
+    IMG_ROOTFS=$(sudo find LiveOS/ -type f -exec du -h {} + | sort -rh | head -n 1 | awk '{print $2}') && sudo file "${IMG_ROOTFS}" | grep -q "ext4 filesystem data" && echo "Успешно: ${IMG_ROOTFS} содержит ext4" ||  (echo "Ошибка: Файл '${IMG_ROOTFS}' не найден или не является ext4"; exit 1)
+    echo "    [+] Связываем файл ${IMG_ROOTFS} с loop-устройством..."
+    sudo losetup --find --partscan --show ${IMG_ROOTFS}
     vLOOPDEV="$(sudo losetup -l | grep rootfs | awk '{print $1}')"
     echo "    [+] Loop-устройство: ${vLOOPDEV}..."
     vROOFSDIR="/mnt/rootfs"
@@ -201,10 +211,10 @@ TMUXCONF
 echo "[+] Добавляем HDSentinel..."
 HDS_URL="https://www.hdsentinel.com/hdslin/hdsentinel-020c-x64.zip"
 HDS_ZIP="/tmp/hdsentinel-020c-x64.zip"
-wget --quiet --show-progress ${HDS_URL} -O ${HDS_ZIP}
+sudo wget -U "${WGET_USER_AGENT}" --quiet --show-progress ${HDS_URL} -O ${HDS_ZIP}
 sudo unzip ${HDS_ZIP} -d ${vROOFSDIR}/usr/local/bin
 sudo chmod +x ${vROOFSDIR}/usr/local/bin/HDSentinel
-rm -fv ${HDS_ZIP}
+sudo rm -fv ${HDS_ZIP}
 
 # свежии версии искать тут --> https://www.broadcom.com/support/download-search?dk=&pa=Management+Software+and+Tools&pf=Legacy+RAID+Controllers&pg=Legacy+Products&pn=All&po=
 echo "[+] Добавляем StorCLI ${SCLI_VER}..."
@@ -212,7 +222,7 @@ SCLI_VER="007.3703.0000.0000"
 SCLI_Rev="MR%207.37"
 SCLI_URL="https://docs.broadcom.com/docs-and-downloads/${SCLI_VER}_${SCLI_Rev}_Storcli.zip"
 SCLI_ZIP="/tmp/Storcli_${SCLI_VER}.zip"
-wget --quiet --show-progress ${SCLI_URL} -O ${SCLI_ZIP}
+wget -U "${WGET_USER_AGENT}" --quiet --show-progress ${SCLI_URL} -O ${SCLI_ZIP}
 unzip -o ${SCLI_ZIP} -d /tmp/
 unzip -o /tmp/storcli_rel/Unified_storcli_all_os.zip -d /tmp
 sudo mv -fv /tmp/Unified_storcli_all_os/Linux/storcli-${SCLI_VER}-1.noarch.rpm ${vROOFSDIR}/opt/
@@ -227,7 +237,13 @@ echo "    [*] 4th Scalable (Sapphire Rapids)"
 echo "    [*] 5th Scalable (Emerald Rapids)"
 echo "    [*] Xeon® 6 (Sierra Forest, Granite Rapids, Granite Rapids-D)"
 DCDIAG_URL="https://repositories.intel.com/dcdt/dcdiag.x86_64.rpm"
-sudo wget --quiet --show-progress ${DCDIAG_URL} -P ${vROOFSDIR}/opt/
+# Выполняем wget, а конструкция '|| true' не дает скрипту упасть, если скачивание не удалось
+sudo wget -U "${WGET_USER_AGENT}" --quiet --show-progress ${DCDIAG_URL} -P ${vROOFSDIR}/opt/ || true
+# Проверяем, появился ли файл в целевой директории
+if [ ! -f "${vROOFSDIR}/opt/dcdiag.x86_64.rpm" ]; then
+    echo "[WARNING] Не удалось скачать файл по ссылке: ${DCDIAG_URL}"
+    echo "Продолжаем выполнение скрипта..."
+fi
 
 echo "[+] Настраиваем репозитории Yandex и подключаем CRB/PowerTools..."
 echo "    [+] Заменяем стандартные зеркала на mirror.yandex.ru во всех *.repo файлах"
@@ -291,7 +307,7 @@ sudo ln -sf /etc/systemd/system/opt-rpm-installer.service ${vROOFSDIR}/etc/syste
 sync
 sudo sync
 
-read -p "Press Enter to continue..." # sudo umount -fv /mnt/rootfs; sudo losetup -D
+read -p "Press Enter to continue..." # sudo umount -fv /mnt/rootfs; sudo losetup -D; sudo kpartx -d /dev/loop0
 echo "Continuing script execution."
 
 if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
@@ -303,7 +319,7 @@ fi
 
 cd ..; pwd
 echo "[+] Пересобираем squashfs..."
-sudo mksquashfs squashfs-root ../LiveOS/squashfs.img -comp xz -b 1M -Xbcj x86 -noappend
+sudo mksquashfs squashfs-root ${IMG_FILE} -comp xz -b 1M -Xbcj x86 -noappend
 
 cd ..; pwd
 echo "[+] Удаляем папку squashfs..."
@@ -316,24 +332,44 @@ echo "vVOLUMEID=${vVOLUMEID}"
 echo "vBOOTCATALOG=${vBOOTCATALOG}"
 echo "vBOOTIMG=${vBOOTIMG}"
 echo "vBOOTEFI=${vBOOTEFI}"
+echo "vISOHDPFX=${vISOHDPFX}"
+
 read -p "Press Enter to continue..."
-if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
+if [[ "${vVERSION}" == "8" ]]; then
   sudo xorriso -as mkisofs -o "../${CUSTOM_ISO}" \
   -volid "${vVOLUMEID}" \
-  -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
+  -isohybrid-mbr ${vISOHDPFX} \
   -c ${vBOOTCATALOG} \
   -b ${vBOOTIMG} -no-emul-boot \
   -boot-load-size 4 \
   -boot-info-table \
   -eltorito-alt-boot \
   -e ${vBOOTEFI} -no-emul-boot \
+  -J -joliet-long -r \
   .
+  echo "    [+] Удаляем папку '${vROOFSDIR}'..."
+  sudo rm -rf ${vROOFSDIR}
+elif [[ "${vVERSION}" == "9" ]]; then
+  sudo xorriso \
+  -indev "../${ISO_NAME}" \
+  -outdev "../${CUSTOM_ISO}" \
+  -volid "${vVOLUMEID}" \
+  -boot_image any replay \
+  -boot_image any patch \
+  -boot_image any msc_mbr="${vISOHDPFX}" \
+  -compliance joliet_long_names \
+  -map . /
   echo "    [+] Удаляем папку '${vROOFSDIR}'..."
   sudo rm -rf ${vROOFSDIR}
 else
   sudo xorriso -as mkisofs -o "../${CUSTOM_ISO}" \
-  -volid "${vVOLUMEID}" -no-emul-boot -boot-load-size 4 -boot-info-table \
-  -eltorito-alt-boot -e ${vBOOTIMG} -no-emul-boot \
+  -indev "../${ISO_NAME}" \
+  -volid "${vVOLUMEID}" \
+  -isohybrid-mbr "${vISOHDPFX}" \
+  -no-emul-boot -boot-load-size 4 -boot-info-table \
+  -eltorito-alt-boot \
+  -boot_image any replay \
+  -J -joliet-long -r \
   .
 fi
 
