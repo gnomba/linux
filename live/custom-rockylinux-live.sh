@@ -73,7 +73,7 @@ read -p "Введите номер версии [1-3]: " CHOICE
 
 case $CHOICE in
   1) vVERSION=8; vARCH=x86_64; ISO_URL="https://mirror.yandex.ru/rockylinux/${vVERSION}/live/${vARCH}/Rocky-${vVERSION}-Workstation-Lite-${vARCH}-latest.iso" ;;
-  2) vVERSION=9; vARCH=x86_64; ISO_URL="https://mirror.yandex.ru/rockylinux/${vVERSION}/live/${vARCH}/Rocky-${vVERSION}-XFCE-${vARCH}-latest.iso" ;;
+  2) vVERSION=9; vARCH=x86_64; ISO_URL="https://mirror.yandex.ru/rockylinux/${vVERSION}/live/${vARCH}/Rocky-${vVERSION}-Workstation-Lite-${vARCH}-latest.iso" ;;
   3) vVERSION=10; vARCH=x86_64; ISO_URL="https://mirror.yandex.ru/rockylinux/${vVERSION}/live/${vARCH}/Rocky-${vVERSION}-Workstation-Lite-${vARCH}-latest.iso" ;;
   *) echo "Неверный выбор"; exit 1 ;;
 esac
@@ -226,6 +226,7 @@ wget -U "${WGET_USER_AGENT}" --quiet --show-progress ${SCLI_URL} -O ${SCLI_ZIP}
 unzip -o ${SCLI_ZIP} -d /tmp/
 unzip -o /tmp/storcli_rel/Unified_storcli_all_os.zip -d /tmp
 sudo mv -fv /tmp/Unified_storcli_all_os/Linux/storcli-${SCLI_VER}-1.noarch.rpm ${vROOFSDIR}/opt/
+sudo wget -U "${WGET_USER_AGENT}" --quiet --show-progress https://download.lenovo.com/servers/mig/2021/11/18/54970/lnvgy_utl_storehba_mpt3.storcli-007.1907.0000.0000-0_linux_x86-64.tgz -O ${vROOFSDIR}/opt/storcli-007.1907.0000.0000.tgz
 
 echo "[+] Добавляем Intel® Data Center Diagnostic Tool for Linux* on Intel® Xeon® Processors..."
 echo "    [*] E5 v4 (Broadwell)"
@@ -260,6 +261,11 @@ if [ -f "${vROOFSDIR}/etc/yum.repos.d/rocky.repo" ]; then
     #sudo sed -i '/^\[crb\]/,/^\[/ s/enabled=0/enabled=1/' ${vROOFSDIR}/etc/yum.repos.d/rocky.repo
 fi
 
+cat <<LOCKDOWN | sudo tee ${vROOFSDIR}/etc/dconf/db/local.d/00-lockdown
+[org/gnome/desktop/lockdown]
+disable-lock-screen=true
+LOCKDOWN
+
 echo "[+] Добавляем автоустановку rpm-пакетов из /opt"
 cat <<INSTRPM | sudo tee ${vROOFSDIR}/usr/local/bin/install-opt-rpms.sh
 #!/bin/bash
@@ -279,6 +285,8 @@ echo "Найдено пакетов: \${#rpms[@]}. Начинаем устано
 dnf install -y "\${rpms[@]}" && rm -fv "\${rpms[@]}"
 
 ln -sf /opt/MegaRAID/storcli/storcli64 /usr/local/bin/storcli
+
+dconf update
 INSTRPM
 sudo chown root:root ${vROOFSDIR}/usr/local/bin/install-opt-rpms.sh
 sudo chmod +x ${vROOFSDIR}/usr/local/bin/install-opt-rpms.sh
