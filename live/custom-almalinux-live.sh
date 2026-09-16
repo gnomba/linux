@@ -263,10 +263,17 @@ if [ -f "${vROOFSDIR}/etc/yum.repos.d/almalinux-crb.repo" ]; then
     sudo sed -i '/^\[crb\]/,/^\[/ s/enabled=0/enabled=1/' ${vROOFSDIR}/etc/yum.repos.d/almalinux-crb.repo
 fi
 
-cat <<LOCKDOWN | sudo tee ${vROOFSDIR}/etc/dconf/db/local.d/00-lockdown
-[org/gnome/desktop/lockdown]
-disable-lock-screen=true
-LOCKDOWN
+echo "[+] Отключаем блокировку экрана и запрос пароля..."
+sudo mkdir -pv ${vROOFSDIR}/etc/skel/.config/autostart/
+cat <<DISABLELOCKSCREEN | sudo tee ${vROOFSDIR}/etc/skel/.config/autostart/disable-lock-screen.desktop
+[Desktop Entry]
+Type=Application
+Exec=bash -c "gsettings set org.gnome.desktop.lockdown disable-lock-screen true && gsettings set org.gnome.desktop.screensaver lock-enabled false && gsettings set org.gnome.desktop.session idle-delay 0"
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name=Disable Lock Screen
+DISABLELOCKSCREEN
 
 echo "[+] Добавляем автоустановку rpm-пакетов из /opt"
 cat <<INSTRPM | sudo tee ${vROOFSDIR}/usr/local/bin/install-opt-rpms.sh
