@@ -272,6 +272,10 @@ NoDisplay=false
 X-GNOME-Autostart-enabled=true
 Name=Disable Lock Screen
 DISABLELOCKSCREEN
+sudo ln -sf /dev/null ${vROOFSDIR}/etc/systemd/system/sleep.target
+sudo ln -sf /dev/null ${vROOFSDIR}/etc/systemd/system/suspend.target
+sudo ln -sf /dev/null ${vROOFSDIR}/etc/systemd/system/hibernate.target
+sudo ln -sf /dev/null ${vROOFSDIR}/etc/systemd/system/hybrid-sleep.target
 
 echo "[+] Добавляем автоустановку rpm-пакетов из /opt"
 cat <<INSTRPM | sudo tee ${vROOFSDIR}/usr/local/bin/install-opt-rpms.sh
