@@ -279,6 +279,10 @@ sudo ln -sf /dev/null ${vROOFSDIR}/etc/systemd/system/suspend.target
 sudo ln -sf /dev/null ${vROOFSDIR}/etc/systemd/system/hibernate.target
 sudo ln -sf /dev/null ${vROOFSDIR}/etc/systemd/system/hybrid-sleep.target
 
+echo "[+] Меняем  часовой пояс на Europe/Moscow..."
+sudo rm -fv ${vROOFSDIR}/etc/localtime
+sudo ln -sf /usr/share/zoneinfo/Europe/Moscow ${vROOFSDIR}/etc/localtime
+
 echo "[+] Добавляем автоустановку rpm-пакетов из /opt"
 cat <<INSTRPM | sudo tee ${vROOFSDIR}/usr/local/bin/install-opt-rpms.sh
 #!/bin/bash
@@ -300,9 +304,32 @@ dnf install -y "\${rpms[@]}" && rm -fv "\${rpms[@]}"
 ln -sf /opt/MegaRAID/storcli/storcli64 /usr/local/bin/storcli
 
 dconf update
+timedatectl set-local-rtc 0
+hwclock --verbose --systohc
 INSTRPM
 sudo chown root:root ${vROOFSDIR}/usr/local/bin/install-opt-rpms.sh
 sudo chmod +x ${vROOFSDIR}/usr/local/bin/install-opt-rpms.sh
+
+vVERSIONID="$(cat ${vROOFSDIR}/etc/os-release | grep VERSION_ID | awk -F'"' '{print $2}')"
+echo "[+] Добавляем репу ${vVERSIONID} Vault AppStream"
+cat <<REPOVAULT | sudo tee ${vROOFSDIR}/etc/yum.repos.d/almalinux-vault.repo
+[vault-appstream]
+name=AlmaLinux ${vVERSIONID} Vault AppStream - \$basearch
+# mirrorlist=https://mirrors.almalinux.org/mirrorlist/\$releasever/appstream
+#baseurl=https://ftp.gwdg.de/pub/linux/almalinux-vault/${vVERSIONID}/AppStream/\$basearch/os/
+baseurl=https://vault.almalinux.org/${vVERSIONID}/AppStream/\$basearch/os/
+enabled=0
+gpgcheck=1
+countme=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux-9
+metadata_expire=86400
+enabled_metadata=1
+REPOVAULT
+
+echo "[+] Отключаем пароль sudo для пользователя liveuser..."
+cat <<DISABLESUDOPASS | sudo tee ${vROOFSDIR}/etc/sudoers.d/liveuser
+liveuser ALL=(ALL) NOPASSWD: ALL
+DISABLESUDOPASS
 
 cat <<INSTRPMSRV | sudo tee ${vROOFSDIR}/etc/systemd/system/opt-rpm-installer.service
 [Unit]
