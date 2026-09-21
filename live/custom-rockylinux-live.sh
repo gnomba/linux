@@ -259,6 +259,8 @@ fi
 if [ -f "${vROOFSDIR}/etc/yum.repos.d/rocky.repo" ]; then
     echo "        [+] Для RockyLinux 9 и 10 (CRB) уже включен!!!"
     #sudo sed -i '/^\[crb\]/,/^\[/ s/enabled=0/enabled=1/' ${vROOFSDIR}/etc/yum.repos.d/rocky.repo
+    if [ -f "${vROOFSDIR}/etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-9" ]; then sudo ln -s /etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-9 ${vROOFSDIR}/etc/pki/rpm-gpg/RPM-GPG-KEY-rockyofficial; fi
+    if [ -f "${vROOFSDIR}/etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-10" ]; then sudo ln -s /etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-10 ${vROOFSDIR}/etc/pki/rpm-gpg/RPM-GPG-KEY-rockyofficial; fi
 fi
 
 echo "[+] Отключаем блокировку экрана и запрос пароля..."
@@ -310,16 +312,16 @@ sudo chmod +x ${vROOFSDIR}/usr/local/bin/install-opt-rpms.sh
 
 vVERSIONID="$(cat ${vROOFSDIR}/etc/os-release | grep VERSION_ID | awk -F'"' '{print $2}')"
 echo "[+] Добавляем репу ${vVERSIONID} Vault AppStream"
-cat <<REPOVAULT | sudo tee ${vROOFSDIR}/etc/yum.repos.d/almalinux-vault.repo
+cat <<REPOVAULT | sudo tee ${vROOFSDIR}/etc/yum.repos.d/rocky-vault.repo
 [vault-appstream]
-name=AlmaLinux ${vVERSIONID} Vault AppStream - \$basearch
-# mirrorlist=https://mirrors.almalinux.org/mirrorlist/\$releasever/appstream
-#baseurl=https://ftp.gwdg.de/pub/linux/almalinux-vault/${vVERSIONID}/AppStream/\$basearch/os/
-baseurl=https://vault.almalinux.org/${vVERSIONID}/AppStream/\$basearch/os/
+name=RockyLinux \$releasever Vault AppStream - \$basearch
+# mirrorlist=https://mirrors.rockylinux.org/mirrorlist?arch=\$basearch&repo=vault-appstream-\$releasever
+#baseurl=https://ftp.gwdg.de/pub/linux/rocky-vault/\$releasever/AppStream/\$basearch/os/
+baseurl=https://dl.rockylinux.org/vault/rocky/\$releasever/AppStream/\$basearch/os/
 enabled=0
 gpgcheck=1
 countme=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux-9
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rockyofficial
 metadata_expire=86400
 enabled_metadata=1
 REPOVAULT

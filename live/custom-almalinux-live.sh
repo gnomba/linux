@@ -261,6 +261,8 @@ fi
 if [ -f "${vROOFSDIR}/etc/yum.repos.d/almalinux-crb.repo" ]; then
     echo "        [+] Для AlmaLinux 9 и 10 (CRB)"
     sudo sed -i '/^\[crb\]/,/^\[/ s/enabled=0/enabled=1/' ${vROOFSDIR}/etc/yum.repos.d/almalinux-crb.repo
+    if [ -f "${vROOFSDIR}/etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux-9" ]; then sudo ln -s /etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux-9 ${vROOFSDIR}/etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux; fi
+    if [ -f "${vROOFSDIR}/etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux-10" ]; then sudo ln -s /etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux-10 ${vROOFSDIR}/etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux; fi
 fi
 
 echo "[+] Отключаем блокировку экрана и запрос пароля..."
@@ -314,14 +316,14 @@ vVERSIONID="$(cat ${vROOFSDIR}/etc/os-release | grep VERSION_ID | awk -F'"' '{pr
 echo "[+] Добавляем репу ${vVERSIONID} Vault AppStream"
 cat <<REPOVAULT | sudo tee ${vROOFSDIR}/etc/yum.repos.d/almalinux-vault.repo
 [vault-appstream]
-name=AlmaLinux ${vVERSIONID} Vault AppStream - \$basearch
+name=AlmaLinux \$releasever Vault AppStream - \$basearch
 # mirrorlist=https://mirrors.almalinux.org/mirrorlist/\$releasever/appstream
-#baseurl=https://ftp.gwdg.de/pub/linux/almalinux-vault/${vVERSIONID}/AppStream/\$basearch/os/
-baseurl=https://vault.almalinux.org/${vVERSIONID}/AppStream/\$basearch/os/
+#baseurl=https://ftp.gwdg.de/pub/linux/almalinux-vault/\$releasever/AppStream/\$basearch/os/
+baseurl=https://vault.almalinux.org/\$releasever/AppStream/\$basearch/os/
 enabled=0
 gpgcheck=1
 countme=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux-9
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux
 metadata_expire=86400
 enabled_metadata=1
 REPOVAULT
