@@ -353,7 +353,7 @@ sudo ln -sf /etc/systemd/system/opt-rpm-installer.service ${vROOFSDIR}/etc/syste
 sync
 sudo sync
 
-read -p "Press Enter to continue..." # sudo umount -fv /mnt/rootfs; sudo losetup -D; sudo kpartx -d /dev/loop0
+read -p "Press Enter to continue..." # sudo umount -fv /mnt/rootfs; sudo losetup -D; sudo kpartx -d "$(sudo losetup -l | grep linux-live | awk '{print $1}')"
 echo "Continuing script execution."
 
 if [[ "${vVERSION}" == "8" || "${vVERSION}" == "9" ]]; then
