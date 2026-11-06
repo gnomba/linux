@@ -2,7 +2,8 @@
 
 set -e
 
-WGET_USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
+# https://browser-use.com/tools/random-user-agent
+WGET_USER_AGENT="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
 
 # Исходный список пакетов через пробел
 PACKAGES="curl kpartx wget xorriso unzip isolinux syslinux-common"
